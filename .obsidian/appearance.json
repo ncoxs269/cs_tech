@@ -1,0 +1,8 @@
+{
+  "cssTheme": "Obsidian Nord",
+  "theme": "obsidian",
+  "baseFontSize": 20,
+  "enabledCssSnippets": [
+    "line-height"
+  ]
+}
