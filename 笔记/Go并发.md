@@ -4,13 +4,12 @@ Tags: [[Go]] [[并发]]
 
 
 # 1 Goroutines和Channels
-## 1.1 Goroutine基础
-当一个程序启动时，其主函数即在一个单独的goroutine中运行，我们叫它main goroutine。新的goroutine会用go语句来创建。在语法上，go语句是一个普通的函数或方法调用前加上关键字go:
-```Go
-f()    // call f(); wait for it to return
-go f() // create a new goroutine that calls f(); don't wait
-```
-go后跟的函数的参数会在go语句自身执行时被求值
+## 1.1 CSP并发模型
+Golang 的并发模型基于 **CSP（Communicating Sequential Processes）** 理论，这种并发模型通过 Goroutine 和 Channel 实现，强调**通过通信来共享内存，而不是通过共享内存来通信**。CSP 是一种由英国计算机科学家 Tony Hoare 在 1978 年提出的并发计算模型。
+
+CSP 模型的核心原则:
+- **通过通信共享内存**：在 Golang 中，数据在 Goroutine 之间传递时，通常通过 Channel 进行通信。这种模式避免了多 Goroutine 访问共享内存引发的竞争条件，从而减少了数据竞争和锁的使用。
+- **同步机制**：Channel 提供了天然的同步机制。当一个 Goroutine 发送数据到一个无缓冲的 Channel 时，它会阻塞，直到另一个 Goroutine 接收数据。这种机制避免了手动使用锁来同步数据。
 
 ## 1.2 runtime包
 ### 1.2.1 runtime.Gosched()
@@ -1143,5 +1142,354 @@ You are 127.0.0.1:64216               127.0.0.1:64216 has arrived
 
 当与n个客户端保持聊天session时，这个程序会有2n+2个并发的goroutine，然而这个程序却并不需要显式的锁。clients这个map被限制在了一个独立的goroutine中，broadcaster，所以它不能被并发地访问。多个goroutine共享的变量只有这些channel和net.Conn的实例，两个东西都是并发安全的。像 broadcaster 又被称为 **monitor groutine**，它通过一个发送 channel 接收外部的消息，并通过接收 channel 给外部发送消息。
 
+# 2 基于共享变量的并发
+## 2.1 竞争条件
+数据竞争会在两个以上的goroutine并发访问相同的变量且至少其中一个为写操作时发生。根据上述定义，有三种方式可以避免数据竞争：
+1. 只读变量
+2. monitor goroutine
+	例如前面的并发web爬虫的main goroutine是唯一一个能够访问seen map的goroutine，而聊天服务器中的broadcaster goroutine是唯一一个能够访问clients map的goroutine。这些变量都被限定在了一个单独的goroutine中。
+	由于其它的goroutine不能够直接访问变量，它们**只能使用一个channel来发送请求给指定的goroutine来查询更新变量**。这也就是Go的口头禅“不要使用共享数据来通信；使用通信来共享数据”。**一个提供对一个指定的变量通过channel来请求的goroutine叫做这个变量的monitor（监控）goroutine**。例如broadcaster goroutine会监控clients map的全部访问。
+3. 互斥
+
+## 2.2 锁
+### 2.2.1 sync.Mutex 互斥锁——不可重入锁
+理想情况下，取款应该只在整个操作中获得一次互斥锁。下面这样的尝试是错误的：
+```Go
+import "sync"
+
+var (
+    mu      sync.Mutex // guards balance
+    balance int
+)
+
+func Deposit(amount int) {
+    mu.Lock()
+    defer mu.Unlock()
+    balance = balance + amount
+}
+
+func Balance() int {
+    mu.Lock()
+    defer mu.Unlock()
+    b := balance
+    return b
+}
+
+// NOTE: incorrect!
+func Withdraw(amount int) bool {
+    mu.Lock()
+    defer mu.Unlock()
+    Deposit(-amount)
+    if Balance() < 0 {
+        Deposit(amount)
+        return false // insufficient funds
+    }
+    return true
+}
+```
+没法对一个已经锁上的mutex来再次上锁——这会导致程序死锁，没法继续执行下去，Withdraw会永远阻塞下去。
+一个通用的解决方案是将一个函数分离为多个函数，比如我们把Deposit分离成两个：一个不导出的函数deposit，这个函数假设锁总是会被保持并去做实际的操作，另一个是导出的函数Deposit，这个函数会调用deposit，但在调用前会先去获取锁。
+
+### 2.2.2 sync.RWMutex读写锁
+```Go
+var mu sync.RWMutex
+var balance int
+func Balance() int {
+    mu.RLock() // readers lock
+    defer mu.RUnlock()
+    return balance
+}
+```
+RWMutex只有当获得锁的大部分goroutine都是读操作，RWMutex才是最能带来好处的。RWMutex需要更复杂的内部记录，所以会让它比一般的无竞争锁的mutex慢一些。
+
+## 2.3 sync 组件
+### 2.3.1 sync.Once惰性初始化
+如果初始化成本比较大的话，那么将初始化延迟到需要的时候再去做就是一个比较好的选择。这里我们可以引入一个允许多读的锁：
+```Go
+var mu sync.RWMutex // guards icons
+var icons map[string]image.Image
+// Concurrency-safe.
+func Icon(name string) image.Image {
+    mu.RLock()
+    if icons != nil {
+        icon := icons[name]
+        mu.RUnlock()
+        return icon
+    }
+    mu.RUnlock()
+
+    // acquire an exclusive lock
+    mu.Lock()
+    if icons == nil { // NOTE: must recheck for nil
+        loadIcons()
+    }
+    icon := icons[name]
+    mu.Unlock()
+    return icon
+}
+```
+
+让我们用sync.Once来简化前面的Icon函数吧：
+```Go
+var loadIconsOnce sync.Once
+var icons map[string]image.Image
+// Concurrency-safe.
+func Icon(name string) image.Image {
+    loadIconsOnce.Do(loadIcons)
+    return icons[name]
+}
+```
+
+### 2.3.2 sync.Map
+Go语言的sync包中提供了一个开箱即用的并发安全版map–sync.Map。开箱即用表示不用像内置的map一样使用make函数初始化就能直接使用。同时sync.Map内置了诸如Store、Load、LoadOrStore、Delete、Range等操作方法。
+
+### 2.3.3 sync.Pool
+一句话总结：保存和复用临时对象，减少内存分配，降低 GC 压力。
+Go 语言从 1.3 版本开始提供了对象重用的机制，即 sync.Pool。sync.Pool 是可伸缩的，同时也是并发安全的，其大小仅受限于内存的大小。sync.Pool 用于存储那些被分配了但是没有被使用，而未来可能会使用的值。这样就可以不用再次经过内存分配，可直接复用已有对象，减轻 GC 的压力，从而提升系统的性能。
+sync.Pool 的大小是可伸缩的，高负载时会动态扩容，存放在池中的对象如果不活跃了会被自动清理。
+```Go
+var studentPool = sync.Pool{
+    New: func() interface{} { 
+        return new(Student) 
+    },
+}
+
+stu := studentPool.Get().(*Student)
+json.Unmarshal(buf, stu)
+studentPool.Put(stu)
+```
+
+## 2.4 原子操作
+### 2.4.1 atomic包
+Go语言中原子操作由内置的标准库sync/atomic提供。方法：
+1. 读取操作：例如 `func LoadInt32(addr *int32) (val int32)`
+2. 写入操作：例如 `func StoreInt32(addr *int32, val int32)`
+3. 修改操作：例如 `func AddInt32(addr *int32, delta int32) (new int32)`
+4. 交换操作：例如 `func SwapInt32(addr *int32, new int32) (old int32)`
+5. 比较并交换操作：例如 `func CompareAndSwapInt32(addr *int32, old, new int32) (swapped bool)`
+
+### 2.4.2 原子引用
+golang 里面的atomic没有提供方法来实现`interface{}`的原子读写。但是atomic提供了 `atomic.Value`. 该类型可以原子更新 `interface{}`。
+`atomic.Value` 里面其实维护的就是一个 `interface{}`. 然后提供原子的更新这个`interface{}`的方法。有以下注意要点：
+- 不能用`atomic.Value`原子值存储nil
+- 我们向原子值存储的第一个值，决定了它今后能且只能存储哪一个类型的值
+
+## 2.5 竞争条件检测
+Go的runtime和工具链为我们装备了一个复杂但好用的动态分析工具，竞争检查器（the race detector）。
+只要在go build，go run或者go test命令后面加上-race的flag，就会使编译器创建一个你的应用的“修改”版或者一个附带了能够记录所有运行期对共享变量访问工具的test，并且会记录下每一个读或者写共享变量的goroutine的身份信息。另外，修改版的程序会记录下所有的同步事件，比如go语句，channel操作，以及对`(*sync.Mutex).Lock`，`(*sync.WaitGroup).Wait`等等的调用。
+竞争检查器会检查这些事件，会寻找在哪一个goroutine中出现了这样的case，例如其读或者写了一个共享变量，这个共享变量是被另一个goroutine在没有进行干预同步操作便直接写入的。这种情况也就表明了是对一个共享变量的并发访问，即数据竞争。这个工具会打印一份报告，内容包含变量身份，读取和写入的goroutine中活跃的函数的调用栈。这些信息在定位问题时通常很有用。
+竞争检查器会报告所有的已经发生的数据竞争。然而，它只能检测到运行时的竞争条件；并不能证明之后不会发生数据竞争。所以为了使结果尽量正确，请保证你的测试并发地覆盖到了你的包。
+
+## 2.6 示例: 并发的非阻塞缓存
+这个问题叫作缓存（memoizing）函数，也就是说，我们需要缓存函数的返回结果，这样在对函数进行调用的时候，我们就只需要一次计算，之后只要返回计算的结果就可以了。
+### 2.6.1 并发不安全方案
+```Go
+// Package memo provides a concurrency-unsafe
+// memoization of a function of type Func.
+package memo
+
+// A Memo caches the results of calling a Func.
+type Memo struct {
+    f     Func
+    cache map[string]result
+}
+
+// Func is the type of the function to memoize.
+type Func func(key string) (interface{}, error)
+
+type result struct {
+    value interface{}
+    err   error
+}
+
+func New(f Func) *Memo {
+    return &Memo{f: f, cache: make(map[string]result)}
+}
+
+// NOTE: not concurrency-safe!
+func (memo *Memo) Get(key string) (interface{}, error) {
+    res, ok := memo.cache[key]
+    if !ok {
+        res.value, res.err = memo.f(key)
+        memo.cache[key] = res
+    }
+    return res.value, res.err
+}
+```
+
+### 2.6.2 基于锁的同步
+最简单的使cache并发安全的方式是使用基于监控的同步。只要给Memo加上一个mutex，在Get的一开始获取互斥锁，return的时候释放锁，就可以让cache的操作发生在临界区内了：
+```Go
+type Memo struct {
+    f     Func
+    mu    sync.Mutex // guards cache
+    cache map[string]result
+}
+
+// Get is concurrency-safe.
+func (memo *Memo) Get(key string) (value interface{}, err error) {
+    memo.mu.Lock()
+    res, ok := memo.cache[key]
+    if !ok {
+        res.value, res.err = memo.f(key)
+        memo.cache[key] = res
+    }
+    memo.mu.Unlock()
+    return res.value, res.err
+}
+```
+
+### 2.6.3 两阶段锁
+下一个Get的实现，调用Get的goroutine会两次获取锁：查找阶段获取一次，如果查找没有返回任何内容，那么进入更新阶段会再次获取。在这两次获取锁的中间阶段，其它goroutine可以随意使用cache。
+```Go
+func (memo *Memo) Get(key string) (value interface{}, err error) {
+    memo.mu.Lock()
+    res, ok := memo.cache[key]
+    memo.mu.Unlock()
+    if !ok {
+        res.value, res.err = memo.f(key)
+
+        // Between the two critical sections, several goroutines
+        // may race to compute f(key) and update the map.
+        memo.mu.Lock()
+        memo.cache[key] = res
+        memo.mu.Unlock()
+    }
+    return res.value, res.err
+}
+```
+这些修改使性能再次得到了提升，但有一些URL被获取了两次。这种情况在两个以上的goroutine同一时刻调用Get来请求同样的URL时会发生。多个goroutine一起查询cache，发现没有值，然后一起调用f这个慢不拉叽的函数。在得到结果后，也都会去更新map。其中一个获得的结果会覆盖掉另一个的结果。
+
+### 2.6.4 避免重复获取——两阶段结果
+理想情况下是应该避免掉多余的工作的。而这种“避免”工作一般被称为**duplicate suppression（重复抑制/避免）**。
+下面版本的Memo每一个map元素都是指向一个条目的指针。每一个条目包含对函数f调用结果的内容缓存。与之前不同的是这次entry还包含了一个叫ready的channel。在条目的结果被设置之后，这个channel就会被关闭，以向其它goroutine广播去读取该条目内的结果是安全的了。
+```Go
+type entry struct {
+    res   result
+    ready chan struct{} // closed when res is ready
+}
+
+func New(f Func) *Memo {
+    return &Memo{f: f, cache: make(map[string]*entry)}
+}
+
+type Memo struct {
+    f     Func
+    mu    sync.Mutex // guards cache
+    cache map[string]*entry
+}
+
+func (memo *Memo) Get(key string) (value interface{}, err error) {
+    memo.mu.Lock()
+    e := memo.cache[key]
+    if e == nil {
+        // This is the first request for this key.
+        // This goroutine becomes responsible for computing
+        // the value and broadcasting the ready condition.
+        e = &entry{ready: make(chan struct{})}
+        memo.cache[key] = e
+        memo.mu.Unlock()
+
+        e.res.value, e.res.err = memo.f(key)
+
+        close(e.ready) // broadcast ready condition
+    } else {
+        // This is a repeat request for this key.
+        memo.mu.Unlock()
+
+        <-e.ready // wait for ready condition
+    }
+    return e.res.value, e.res.err
+}
+```
+
+### 2.6.5 基于 monitor channel 的并发
+```Go
+// Func is the type of the function to memoize.
+type Func func(key string) (interface{}, error)
+
+// A result is the result of calling a Func.
+type result struct {
+    value interface{}
+    err   error
+}
+
+type entry struct {
+    res   result
+    ready chan struct{} // closed when res is ready
+}
+
+
+// A request is a message requesting that the Func be applied to key.
+type request struct {
+    key      string
+    response chan<- result // the client wants a single result
+}
+
+type Memo struct{ requests chan request }
+// New returns a memoization of f.  Clients must subsequently call Close.
+func New(f Func) *Memo {
+    memo := &Memo{requests: make(chan request)}
+    go memo.server(f)
+    return memo
+}
+
+func (memo *Memo) server(f Func) {
+    cache := make(map[string]*entry)
+    for req := range memo.requests {
+        e := cache[req.key]
+        if e == nil {
+            // This is the first request for this key.
+            e = &entry{ready: make(chan struct{})}
+            cache[req.key] = e
+            go e.call(f, req.key) // call f(key)
+        }
+        go e.deliver(req.response)
+    }
+}
+
+func (e *entry) call(f Func, key string) {
+    // Evaluate the function.
+    e.res.value, e.res.err = f(key)
+    // Broadcast the ready condition.
+    close(e.ready)
+}
+
+func (e *entry) deliver(response chan<- result) {
+    // Wait for the ready condition.
+    <-e.ready
+    // Send the result to the client.
+    response <- e.res
+}
+
+
+func (memo *Memo) Get(key string) (interface{}, error) {
+    response := make(chan result)
+    memo.requests <- request{key, response}
+    res := <-response
+    return res.value, res.err
+}
+
+func (memo *Memo) Close() { close(memo.requests) }
+```
+
+# 3 总结
+1. 并发的基本问题：
+	1. 等待并发完成&收集结果：使用 sync.WaitGroup 或 channel 等待并发完成，并收集结果。注意要等待未完成的协程运行完，防止协程泄漏 。[[#1.6.4 版本4：返回error和goroutine泄露]]
+	2. 当并发次数不确定时，可以使用  sync.WaitGroup 加上一个 closer 协程
+	3. 要限制同时并发数，防止协程过多、资源耗尽(网络连接、文件句柄)。
+	4. [[#1.7.2 channel作为信号量限制并发次数]]
+	5. [[#1.7.4 使用固定数量的协程并解决死锁]]
+	6. [[#1.7.3 解决程序终止问题]]
+2. 并发的进阶处理：
+	1. [[#基于select的多路复用]]
+	2. 利用channel的广播机制实现并发的退出，注意子协程中也需要处理退出信号
+	3. 使用monitor groutine，集中处理并发问题，并通过channel通信收发请求（有点像中介设计模式）。[[#1.11 示例：聊天室——monitor groutine]]
+3. 并发工具：锁、sync组件、原子变量
+	1. 较少锁的范围，增加锁的次数。例如两阶段锁
+	2. 但是两阶段锁又会带来重复获取的问题。
+		1. 可以使用entry先占位，再通过channel广播是否ready。也是一个两阶段结果
+		2. 或者使用 monitor goroutine 加两阶段结果实现
+
 ---
-# 2 引用
+# 4 引用

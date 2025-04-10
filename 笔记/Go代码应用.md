@@ -3,8 +3,74 @@ Status: #idea
 Tags: [[Go]]
 
 
-# 1 命令行参数
-## 1.1 os.Args
+# 1 runtime包
+runtime包是Go语言的运行时系统，提供了与Go程序运行环境交互的底层操作。它包含了很多用于控制和查询Go程序运行时行为的函数。
+
+Goroutine管理：
+```Go
+runtime.GOMAXPROCS(n)  // 设置可同时执行的最大CPU数
+runtime.Gosched()      // 让出当前goroutine的执行权
+runtime.NumGoroutine() // 返回当前存在的goroutine数量
+runtime.Goexit()       // 终止调用它的goroutine
+```
+
+内存管理:
+```Go
+runtime.GC()           // 强制进行垃圾回收
+runtime.ReadMemStats(&m) // 读取内存使用统计信息
+runtime.SetFinalizer(obj, finalizer) // 为对象设置终结器
+runtime.SetGCPercent(percent int) int // 设置垃圾回收的目标百分比
+runtime.MemoryBarrier() // 插入内存屏障，确保内存操作的顺序
+```
+
+调度器控制:
+```Go
+runtime.LockOSThread()   // 将当前goroutine锁定到当前操作系统线程
+runtime.UnlockOSThread() // 解除当前goroutine与操作系统线程的锁定
+```
+
+栈管理：
+```Go
+runtime.Stack(buf []byte, all bool) // 获取goroutine的栈踪迹
+runtime.Caller(skip int) (pc uintptr, file string, line int, ok bool) // 获取调用者信息
+```
+
+性能分析和调试:
+```Go
+runtime.StartTrace() // 开始执行跟踪
+runtime.StopTrace()  // 停止执行跟踪
+runtime.SetCPUProfileRate(hz int) // 设置CPU分析的采样频率
+```
+
+系统和环境信息:
+```Go
+runtime.GOROOT()     // 返回Go的安装路径
+runtime.Version()    // 返回Go的版本号
+runtime.GOOS         // 目标操作系统
+runtime.GOARCH       // 目标架构
+runtime.NumCPU()     // 返回当前系统的CPU核心数
+```
+
+错误和异常处理：
+```Go
+runtime.Error           // runtime错误接口
+runtime.Caller()        // 获取调用栈信息
+runtime.Callers()       // 获取调用栈的程序计数器
+runtime.FuncForPC(pc)   // 根据程序计数器获取函数信息
+```
+
+race检测:
+```Go
+runtime.RaceEnable()    // 启用竞争检测
+runtime.RaceDisable()   // 禁用竞争检测
+runtime.RaceAcquire(addr unsafe.Pointer)   // 报告对addr的读操作
+runtime.RaceRelease(addr unsafe.Pointer)   // 报告对addr的写操作
+```
+
+系统监控：runtime包内部实现了一个后台监控goroutine，用于检测死锁、长时间运行的goroutine等异常情况。
+
+# 2 命令行参数
+## 2.1 os.Args
 `os` 包以跨平台的方式，提供了一些与操作系统交互的函数和变量。程序的命令行参数可从 `os` 包的 `Args` 变量获取；`os` 包外部使用 `os.Args` 访问该变量。
 
 `os.Args` 的第一个元素：`os.Args[0]`，是命令本身的名字；其它的元素则是程序启动时传给它的参数。
@@ -29,7 +95,7 @@ func main() {
 }
 ```
 
-## 1.2 flag
+## 2.2 flag
 指针是实现标准库中flag包的关键技术，它使用命令行参数来设置对应变量的值，而这些对应命令行标志参数的变量可能会零散分布在整个程序中。为了说明这一点，在早些的echo版本中，就包含了两个可选的命令行参数：`-n`用于忽略行尾的换行符，`-s sep`用于指定分隔字符（默认是空格）：
 ```go
 // Echo4 prints its command-line arguments.
@@ -53,7 +119,7 @@ func main() {
 }
 ```
 
-### 1.2.1 flag.Value
+### 2.2.1 flag.Value
 思考下面这个会休眠特定时间的程序：
 ```Go
 var period = flag.Duration("period", 1*time.Second, "sleep period")
@@ -154,7 +220,7 @@ Usage of ./tempflag:
 ```
 
 
-# 2 fmt格式化
+# 3 fmt格式化
 当使用fmt包打印一个数值时，我们可以用%d、%o或%x参数控制输出的进制格式，就像下面的例子：
 ```go
 o := 0666
@@ -231,9 +297,12 @@ fmt.Printf("%#v\n", w)
 // Output:
 // Wheel{Circle:Circle{Point:Point{X:42, Y:8}, Radius:5}, Spokes:20}
 ```
+`%v`输出结构体各成员的值；
+`%+v`输出结构体各成员的**名称**和**值**；
+`%#v`输出结构体名称和结构体各成员的名称和值
 
-# 3 排序：sort.Interface 接口
-## 3.1 接口方法
+# 4 排序：sort.Interface 接口
+## 4.1 接口方法
 一个内置的排序算法需要知道三个东西：序列的长度，表示两个元素比较的结果，一种交换两个元素的方式；这就是sort.Interface的三个方法：
 ```Go
 package sort
@@ -257,7 +326,7 @@ sort.Sort(StringSlice(names))
 ```
 对字符串切片的排序是很常用的需要，所以sort包提供了StringSlice类型，也提供了Strings函数能让上面这些调用简化成sort.Strings(names)。
 
-## 3.2 示例：sorting
+## 4.2 示例：sorting
 我们会运行上面的例子来对一个表格中的音乐播放列表进行排序。每个track都是单独的一行，每一列都是这个track的属性像艺术家，标题，和运行时间。想象一个图形用户界面来呈现这个表格，并且点击一个属性的顶部会使这个列表按照这个属性进行排序；再一次点击相同属性的顶部会进行逆向排序。让我们看下每个点击会发生什么响应。
 ```Go
 type Track struct {
@@ -331,7 +400,7 @@ func (r reverse) Less(i, j int) bool { return r.Interface.Less(j, i) }
 func Reverse(data Interface) Interface { return reverse{data} }
 ```
 
-### 3.2.1 进一步抽象
+### 4.2.1 进一步抽象
 为了可以按照不同的列进行排序，我们必须定义一个新的类型例如byYear：
 ```Go
 type byYear []*Track
@@ -367,10 +436,10 @@ sort.Sort(customSort{tracks, func(x, y *Track) bool {
 }})
 ```
 
-# 4 JSON
+# 5 JSON
 Go语言对于这些标准格式的编码和解码都有良好的支持，由标准库中的`encoding/json`、`encoding/xml`、`encoding/asn1`等包提供支持（Protocol Buffers的支持由 github.com/golang/protobuf 包提供），并且这类包都有着相似的API接口。
 
-## 4.1 JSON 编码
+## 5.1 JSON 编码
 考虑一个应用程序，该程序负责收集各种电影评论并提供反馈功能。它的Movie数据类型和一个典型的表示电影的值列表如下所示。（在结构体声明中，Year和Color成员后面的字符串面值是结构体成员Tag；我们稍后会解释它的作用。）
 ```Go
 type Movie struct {
@@ -440,7 +509,7 @@ fmt.Printf("%s\n", data)
 ```
 在编码时，默认使用Go语言结构体的成员名字作为JSON的对象。**只有导出的结构体成员才会被编码**，这也就是我们为什么选择用大写字母开头的成员名称。
 
-## 4.2 结构体成员 Tag
+## 5.2 结构体成员 Tag
 一个结构体成员Tag是和在编译阶段关联到该成员的元信息字符串：
 ```Go
 Year  int  `json:"released"`
@@ -451,7 +520,7 @@ json开头键名对应的值用于控制`encoding/json`包的编码和解码的�
 
 Color成员的Tag还带了一个额外的**`omitempty`选项**，表示当Go语言结构体成员为空或零值时不生成该JSON对象（这里false为零值）。
 
-## 4.3 JSON 解码
+## 5.3 JSON 解码
 编码的逆操作是解码，对应将JSON数据解码为Go语言的数据结构，Go语言中一般叫unmarshaling，通过`json.Unmarshal`函数完成。
 下面的代码将JSON格式的电影数据解码为一个结构体slice，结构体中只有Title成员。通过定义合适的Go语言数据结构，**我们可以选择性地解码JSON中感兴趣的成员**。当Unmarshal函数调用返回，slice将被只含有Title信息的值填充，其它JSON成员将被忽略。
 ```Go
@@ -462,10 +531,10 @@ if err := json.Unmarshal(data, &titles); err != nil {
 fmt.Println(titles) // "[{Casablanca} {Cool Hand Luke} {Bullitt}]"
 ```
 
-# 5 文本和HTML模板
+# 6 文本和HTML模板
 有时候会需要复杂的打印格式，这时候一般需要将格式化代码分离出来以便更安全地修改。这些功能是由`text/template`和`html/template`等模板包提供的，它们提供了一个将变量值填充到一个文本或HTML格式的模板的机制。
 
-## 5.1 text/template
+## 6.1 text/template
 一个模板是一个字符串或一个文件，里面包含了一个或多个由双花括号包含的`{{action}}`对象。
 大部分的字符串只是按字面值打印，但是对于actions部分将触发其它的行为。每个actions都包含了一个用模板语言书写的表达式，一个action虽然简短但是可以输出复杂的打印值，模板语言包含通过选择结构体的成员、调用函数或方法、表达式控制流if-else语句和range循环语句，还有其它实例化模板等诸多特性。下面是一个简单的模板字符串：
 ```Go
@@ -534,7 +603,7 @@ Age:       695 days
 ...
 ```
 
-## 5.2 html/template
+## 6.2 html/template
 它使用和`text/template`包相同的API和模板语言，但是增加了一个将字符串自动转义特性，这可以避免输入字符串和HTML、JavaScript、CSS或URL语法产生冲突的问题。这个特性还可以避免一些长期存在的安全问题，比如通过生成HTML注入攻击，通过构造一个含有恶意代码的问题标题，这些都可能让模板输出错误的输出，从而让他们控制页面。
 ```Go
 import "html/template"
@@ -580,15 +649,15 @@ func main() {
 我们看到A的黑体标记被转义失效了，但是B没有。
 ![[Pasted image 20250328205325.png]]
 
-## 5.3 更多特性参考文档
+## 6.3 更多特性参考文档
 如果想了解更多的信息，请自己查看包文档：
 ```Go
 $ go doc text/template
 $ go doc html/template
 ```
 
-# 6 查找重复的行
-## 6.1 bufio.NewScanner
+# 7 查找重复的行
+## 7.1 bufio.NewScanner
 `dup` 的第一个版本打印标准输入中多次出现的行，以重复次数开头。该程序将引入 `if` 语句，`map` 数据类型以及 `bufio` 包。
 
 ```go
@@ -621,7 +690,7 @@ func main() {
 
 
 
-## 6.2 os.Open
+## 7.2 os.Open
 
 `dup` 程序的下个版本读取标准输入或是使用 `os.Open` 打开各个具名文件，并操作它们：
 
@@ -671,7 +740,7 @@ func countLines(f *os.File, counts map[string]int) {
 
 
 
-## 6.3 ioutil.ReadFile
+## 7.3 ioutil.ReadFile
 
 理论上，这些程序可以处理任意数量的输入数据。还有另一个方法，就是一口气把全部输入数据读到内存中，一次分割为多行，然后处理它们。下面这个版本，`dup3`，就是这么操作的。这个例子引入了 `ReadFile` 函数（来自于`io/ioutil`包），其读取指定文件的全部内容，`strings.Split` 函数把字符串分割成子串的切片。
 
@@ -709,5 +778,5 @@ func main() {
 实现上，`bufio.Scanner`、`ioutil.ReadFile` 和 `ioutil.WriteFile` 都使用 `*os.File` 的 `Read` 和 `Write` 方法，但是，大多数程序员很少需要直接调用那些低级（lower-level）函数。高级（higher-level）函数，像 `bufio` 和 `io/ioutil` 包中所提供的那些，用起来要容易点。
 
 ---
-# 7 引用
+# 8 引用
 https://gopl-zh.github.io/index.html

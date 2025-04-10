@@ -375,6 +375,7 @@ func zero(ptr *[32]byte) {
 ```
 
 ## 3.2 Slice
+### 3.2.1 基础
 一个slice是一个轻量级的数据结构，提供了访问数组子序列（或者全部）元素的功能，而且slice的底层确实引用一个数组对象。
 一个slice由三个部分构成：指针、长度和容量。
 - 指针指向第一个slice元素对应的底层数组元素的地址，要注意的是slice的第一个元素并不一定就是数组的第一个元素。
@@ -382,6 +383,7 @@ func zero(ptr *[32]byte) {
 - 容量一般是从slice的开始位置到底层数据的结尾位置。
 内置的len和cap函数分别返回slice的长度和容量。
 
+### 3.2.2 底层数组和切片
 多个slice之间可以共享底层的数据，并且引用的数组部分区间可能重叠。作为例子，数组这样定义：
 ```Go
 months := [...]string{1: "January", /* 省略其他月份的展示 */, 12: "December"}
@@ -398,6 +400,7 @@ endlessSummer := summer[:5] // extend a slice (within capacity)
 fmt.Println(endlessSummer)  // "[June July August September October]"
 ```
 
+### 3.2.3 不可比较
 和数组不同的是，slice之间不能比较，因此我们不能使用\==操作符来判断两个slice是否含有全部相等元素。不过标准库提供了高度优化的bytes.Equal函数来判断两个字节型slice是否相等（[]byte），但是对于其他类型的slice，我们必须自己展开每个元素进行比较：
 ```Go
 func equal(x, y []string) bool {
@@ -414,6 +417,7 @@ func equal(x, y []string) bool {
 ```
 slice唯一合法的比较操作是和nil比较。
 
+### 3.2.4 零值slice
 一个零值的slice等于nil，一个nil值的slice的长度和容量都是0，但是也有非nil值的slice的长度和容量也是0的，例如[]int{}或make([]int, 3)[3:]。与任意类型的nil值一样，我们可以用[]int(nil)类型转换表达式来生成一个对应类型slice的nil值：
 ```Go
 var s []int    // len(s) == 0, s == nil
@@ -424,7 +428,13 @@ s = []int{}    // len(s) == 0, s != nil
 
 如果你需要测试一个slice是否是空的，使用len(s) == 0来判断，而不应该用s == nil来判断。除了和nil相等比较外，一个nil值的slice的行为和其它任意0长度的slice一样；例如reverse(nil)也是安全的。**除了文档已经明确说明的地方，所有的Go语言函数应该以相同的方式对待nil值的slice和0长度的slice**。
 
-虽然通过循环复制元素更直接，不过内置的copy函数可以方便地将一个slice复制另一个相同类型的slice。copy函数的第一个参数是要复制的目标slice，第二个参数是源slice，目标和源的位置顺序和`dst = src`赋值语句是一致的。两个slice可以共享同一个底层数组，甚至有重叠也没有问题。copy函数将返回成功复制的元素的个数（我们这里没有用到），等于两个slice中较小的长度，所以我们不用担心覆盖会超出目标slice的范围。
+### 3.2.5 copy函数
+虽然通过循环复制元素更直接，不过内置的copy函数可以方便地将一个slice复制另一个相同类型的slice。
+copy函数的第一个参数是要复制的目标slice，第二个参数是源slice，目标和源的位置顺序和`dst = src`赋值语句是一致的。两个slice可以共享同一个底层数组，甚至有重叠也没有问题。
+```Go
+copy( destSlice, srcSlice []T) int
+```
+copy函数将返回成功复制的元素的个数（我们这里没有用到），等于两个slice中较小的长度，所以我们不用担心覆盖会超出目标slice的范围。
 
 ## 3.3 Map
 map类型可以写为map[K]V，其中K和V分别对应key和value。其中K对应的key必须是支持\==比较运算符的数据类型。虽然浮点数类型也是支持相等运算符比较的，但是将浮点数用做key类型则是一个坏的想法，正如第三章提到的，最坏的情况是可能出现的NaN和任何浮点数都不相等。
@@ -1143,6 +1153,29 @@ Golang方法集 ：每个类型都有与之关联的方法集，这会影响到�
 - 如类型 S 包含匿名字段 T，则 S 和 \*S 方法集包含 T 方法。
 - 如类型 S 包含匿名字段 \*T，则 S 和 \*S 方法集包含 T + \*T 方法。
 - 不管嵌入 T 或 \*T，\*S 方法集总是包含 T + \*T 方法。
+
+例如：
+```Go
+type Man struct {}
+
+type Woman struct {}
+
+// Say()方法的全名为(*Man).Say()，即只有指针类型*Man才有Say()方法
+func (*Man) Say() {
+    fmt.Println("man say")
+}
+
+// Say()方法的全名为(Woman).Say()，即只有值类型Woman才有Say()方法
+func (Woman) Say() {
+    fmt.Println("woman say")
+}
+
+// 定义一个说话接口
+type CanTalk interface {
+	Say()
+}
+```
+如果将 `指针类型的 *man` 或者 `值类型/指针类型的 woman` 的变量赋值给`CanTalk`则没有问题。
 
 # 6 接口
 ## 6.1 接口类型
