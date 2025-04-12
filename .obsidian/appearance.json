@@ -3,7 +3,6 @@
   "theme": "obsidian",
   "baseFontSize": 20,
   "enabledCssSnippets": [
-    "line-height",
-    "image"
+    "line-height"
   ]
 }

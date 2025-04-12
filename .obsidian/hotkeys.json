@@ -61,5 +61,14 @@
       "key": "6"
     }
   ],
-  "workspace:goto-tab-6": []
+  "workspace:goto-tab-6": [],
+  "editor:toggle-highlight": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "H"
+    }
+  ],
+  "editor:open-search-replace": []
 }
