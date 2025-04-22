@@ -13,7 +13,7 @@ t := reflect.TypeOf(3)  // a reflect.Type
 fmt.Println(t.String()) // "int"
 fmt.Println(t)          // "int"
 ```
-因为 `reflect.TypeOf` 返回的是一个动态类型的接口值，它总是返回具体的类型。因此，下面的代码将打印 "\*os.File" 而不是 "io.Writer"。
+因为 `reflect.TypeOf` 返回的是一个动态类型的接口值，**它总是返回具体的类型**。因此，下面的代码将打印 "\*os.File" 而不是 "io.Writer"。
 ```Go
 var w io.Writer = os.Stdout
 fmt.Println(reflect.TypeOf(w)) // "*os.File"

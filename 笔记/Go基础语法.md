@@ -62,11 +62,81 @@ func g() {
 ```
 f函数里的x变量必须在堆上分配，因为它在函数退出后依然可以通过包一级的global变量找到，虽然它是在函数内部定义的；用Go语言的术语说，这个x局部变量从函数f中**逃逸**了。相反，当g函数返回时，变量`*y`将是不可达的，也就是说可以马上被回收的。因此，`*y`并没有从函数g中逃逸，编译器可以选择在栈上分配`*y`的存储空间（译注：也可以选择在堆上分配，然后由Go语言的GC回收这个变量的内存空间）
 
-## 1.2 包和文件
-### 1.2.1 包注释
+## 1.2 switch
+Go 编程语言中 switch 语句的语法如下：
+```GO
+switch var1 {
+    case val1:
+        ...
+    case val2:
+        ...
+    default:
+        ...
+}
+```
+变量 var1 可以是任何类型，而 val1 和 val2 则可以是**同类型**的任意值。类型不被局限于常量或整数，但必须是相同的类型；或者最终结果为相同类型的表达式。
+
+可以同时测试多个可能符合条件的值，使用逗号分割它们，例如：**case val1, val2, val3**。
+switch 语句还可以被用于 type-switch 来判断某个 interface 变量中实际存储的变量类型：
+```Go
+package main
+
+import "fmt"
+
+func main() {
+   var x interface{}
+     
+   switch i := x.(type) {
+      case nil:   
+         fmt.Printf(" x 的类型 :%T",i)                
+      case int:   
+         fmt.Printf("x 是 int 型")                       
+      case float64:
+         fmt.Printf("x 是 float64 型")           
+      case func(int) float64:
+         fmt.Printf("x 是 func(int) 型")                      
+      case bool, string:
+         fmt.Printf("x 是 bool 或 string 型" )       
+      default:
+         fmt.Printf("未知型")     
+   }   
+}
+```
+
+使用 fallthrough 会强制执行后面的 case 语句，fallthrough 不会判断下一条 case 的表达式结果是否为 true。
+```Go
+package main
+
+import "fmt"
+
+func main() {
+
+    switch {
+    case false:
+            fmt.Println("1、case 条件语句为 false")
+            fallthrough
+    case true:
+            fmt.Println("2、case 条件语句为 true")
+            fallthrough
+    case false:
+            fmt.Println("3、case 条件语句为 false")
+            fallthrough
+    case true:
+            fmt.Println("4、case 条件语句为 true")
+    case false:
+            fmt.Println("5、case 条件语句为 false")
+            fallthrough
+    default:
+            fmt.Println("6、默认 case")
+    }
+}
+```
+
+## 1.3 包和文件
+### 1.3.1 包注释
 在每个源文件的包声明前紧跟着的注释是包注释。通常，包注释的第一句应该先是包的功能概要说明。一个包通常只有一个源文件有包注释（如果有多个包注释，目前的文档工具会根据源文件名的先后顺序将它们链接为一个包注释）。如果包注释很大，通常会放到一个独立的`doc.go`文件中。
 
-### 1.2.2 内部包
+### 1.3.2 内部包
 Go语言的构建工具对包含**internal**名字的路径段的包导入路径做了特殊处理。这种包叫internal包，一个internal包只能被和internal目录有同一个父目录的包所导入。
 例如，net/http/internal/chunked内部包只能被net/http/httputil或net/http包导入，但是不能被net/url包导入。不过net/url包却可以导入net/http/httputil包。
 
@@ -230,7 +300,7 @@ func parseIPv4(s string) IP {
 }
 ```
 
-如果是批量声明的常量，除了第一个外其它的常量右边的初始化表达式都可以省略，如果省略初始化表达式则表示使用前面常量的初始化表达式写法，对应的常量类型也一样的。例如：
+如果是**批量声明的常量**，除了第一个外其它的常量右边的初始化表达式都可以省略，如果省略初始化表达式则表示使用前面常量的初始化表达式写法，对应的常量类型也一样的。例如：
 ```Go
 const (
     a = 1
@@ -241,6 +311,8 @@ const (
 
 fmt.Println(a, b, c, d) // "1 1 2 2"
 ```
+
+**Go语⾔中，常量⽆法寻址, 是不能进⾏取指针操作的**。
 
 ### 2.5.2 iota 常量生成器
 在一个const声明语句中，在第一个声明的常量所在的行，iota将会被置为0，然后在每一个有常量声明的行加一。
@@ -1156,26 +1228,48 @@ Golang方法集 ：每个类型都有与之关联的方法集，这会影响到�
 
 例如：
 ```Go
-type Man struct {}
+import "testing"
 
-type Woman struct {}
-
-// Say()方法的全名为(*Man).Say()，即只有指针类型*Man才有Say()方法
-func (*Man) Say() {
-    fmt.Println("man say")
+type IA interface {
+	AA()
 }
 
-// Say()方法的全名为(Woman).Say()，即只有值类型Woman才有Say()方法
-func (Woman) Say() {
-    fmt.Println("woman say")
+type IB interface {
+	BB()
 }
 
-// 定义一个说话接口
-type CanTalk interface {
-	Say()
+type A struct {
+}
+
+func (a *A) AA() {
+}
+
+type B struct {
+	A
+}
+
+func (b *B) BB()  {
+	
+}
+
+func Test(t *testing.T) {
+	b := B{}
+	bb := &b
+
+	b.AA()
+	b.BB()
+	bb.AA()
+	bb.BB()
+
+	var ai IA
+	var bi IB
+
+	// ai = b 编译错误
+	// bi = b 编译错误
+	ai = bb
+	bi = bb
 }
 ```
-如果将 `指针类型的 *man` 或者 `值类型/指针类型的 woman` 的变量赋值给`CanTalk`则没有问题。
 
 # 6 接口
 ## 6.1 接口类型
