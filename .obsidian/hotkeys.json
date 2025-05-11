@@ -70,5 +70,13 @@
       "key": "H"
     }
   ],
-  "editor:open-search-replace": []
+  "editor:open-search-replace": [],
+  "editor:toggle-strikethrough": [
+    {
+      "modifiers": [
+        "Alt"
+      ],
+      "key": "D"
+    }
+  ]
 }
