@@ -37,6 +37,9 @@ Redis：
 - 底层原理
 - 高性能原理
 
+nginx：
+- 499
+
 **计算机网络**
 - https://xiaolincoding.com/network/
 - TCP 3次握手，4次挥手
@@ -52,6 +55,9 @@ Redis：
 **算法**：
 - 华为机试题 https://www.nowcoder.com/exam/oj/ta?difficulty=3&page=1&pageSize=50&search=&tpId=37&type=37
 - leetcode：https://leetcode.cn/studyplan/leetcode-75/
+
+**项目**：
+- 实例系统：灰度方案
 
 数仓：
 - spark原理和优化  
