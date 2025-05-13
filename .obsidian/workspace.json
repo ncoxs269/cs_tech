@@ -60,7 +60,7 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -83,7 +83,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "文件列表"
+              "title": "Files"
             }
           },
           {
@@ -181,13 +181,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/TODO.md",
+                "file": "笔记/场景题.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "TODO 的大纲"
+              "title": "Outline of 场景题"
             }
           }
         ],
@@ -199,19 +199,19 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:打开快速切换": false,
-      "graph:查看关系图谱": false,
-      "canvas:新建白板": false,
-      "daily-notes:打开/创建今天的日记": false,
-      "templates:插入模板": false,
-      "command-palette:打开命令面板": false
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
     }
   },
-  "active": "f4a76640f24883fd",
+  "active": "06ed21caddd82701",
   "lastOpenFiles": [
-    "笔记/场景题.md",
     "笔记/分布式-应用.md",
     "笔记/TODO.md",
+    "笔记/场景题.md",
     "笔记/分布式-共识与算法.md",
     "笔记/Go语法八股.md",
     "附件/image-130.png",
