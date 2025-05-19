@@ -23,40 +23,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "笔记/TODO.md",
+                "file": "笔记/找工作情况.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "TODO"
+              "title": "找工作情况"
             }
           },
           {
-            "id": "06ed21caddd82701",
+            "id": "61a3fd724eed5fa3",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "笔记/场景题.md",
+                "file": "笔记/场景题和设计题.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "场景题"
-            }
-          },
-          {
-            "id": "40ee41875d0ba2e6",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "笔记/分布式-应用.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "分布式-应用"
+              "title": "场景题和设计题"
             }
           }
         ],
@@ -83,7 +69,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "Files"
+              "title": "文件列表"
             }
           },
           {
@@ -181,13 +167,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/场景题.md",
+                "file": "笔记/场景题和设计题.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of 场景题"
+              "title": "场景题和设计题 的大纲"
             }
           }
         ],
@@ -199,52 +185,52 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false
     }
   },
-  "active": "06ed21caddd82701",
+  "active": "61a3fd724eed5fa3",
   "lastOpenFiles": [
-    "笔记/分布式-应用.md",
+    "附件/image-148.png",
+    "附件/image-147.png",
+    "附件/image-146.png",
+    "附件/image-145.png",
+    "附件/image-144.png",
+    "附件/image-143.png",
+    "附件/image-142.png",
+    "附件/image-141.png",
+    "附件/image-140.png",
+    "附件/image-139.png",
+    "附件/image-138.png",
+    "笔记/消息队列.md",
+    "笔记/Redis-应用.md",
+    "笔记/场景题和设计题.md",
+    "笔记/找工作情况.md",
     "笔记/TODO.md",
-    "笔记/场景题.md",
+    "笔记/分布式-应用.md",
     "笔记/分布式-共识与算法.md",
     "笔记/Go语法八股.md",
-    "附件/image-130.png",
     "笔记/容器.md",
     "笔记/Go并发原理与工具.md",
     "笔记/Go并发.md",
-    "附件/image-129.png",
     "笔记/Go并发模型.md",
     "笔记/Go底层原理.md",
-    "笔记/消息队列.md",
-    "笔记/找工作情况.md",
     "笔记/云原生技术概论.md",
     "笔记/Redis-线程与内存模型.md",
     "笔记/Redis-BLock实现.md",
     "笔记/Redis.md",
-    "附件/image-128.png",
     "笔记/并发.md",
     "笔记/Go数据结构.md",
-    "附件/image-127.png",
-    "附件/Pasted image 20250508154710.png",
-    "附件/Pasted image 20250508151816.png",
-    "附件/image-126.png",
-    "附件/image-125.png",
     "笔记/MySQL-日志与主备.md",
     "笔记/MySQL-锁.md",
-    "附件/image-124.png",
-    "笔记/Redis-应用.md",
-    "附件/67f3d7e8f5a8d10bce433f54.png",
     "笔记/Redis-持久化与监控.md",
     "笔记/Redis-数据结构.md",
     "笔记/Redis-集群.md",
     "笔记/MySQL.md",
-    "笔记/MySQL-分库分表.md",
     "附件/-1webp",
     "引用",
     "附件",
