@@ -226,6 +226,9 @@ fmt.Println(unsafe.Sizeof(s)) // prints 0
     - `new`的语法是 `func new(Type) *Type`。
     - `make`的语法是 `func make(t Type, size ...IntegerType) Type`。
 
+## 1.8 为什么不能跨协程recover panic
+因为 `panic` 和 `recover` 都是针对单个goroutine 的，每个goroutine 都有独立的调用栈。`panic` 发生时，会沿着调用栈向上查找，直到找到 `recover`，而 `recover` 只能在当前goroutine 的调用栈中查找，无法跨goroutine 查找。
+
 # 2 并发
 ## 2.1 操作未初始化的 chan 会怎么样
 未初始化的 chan 也就是 nil。对它进行读写会阻塞，close会panic。
