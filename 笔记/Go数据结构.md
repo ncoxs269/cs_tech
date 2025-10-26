@@ -3,8 +3,7 @@ Status: #idea
 Tags: [[Go底层原理]]
 
 
-# 1 数据结构
-## 1.1 string
+# 1 string
 `string`类型本质也是一个结构体，定义如下：
 ```text
 type stringStruct struct {
@@ -26,7 +25,7 @@ s := "abc"
 ```
 入参是一个`byte`类型的指针，从这我们可以看出`string`类型底层是一个`byte`类型的数组。
 
-### 1.1.1 string和[]byte转换
+## 1.1 string和[]byte转换
 `Go`语言中提供了标准方式对`string`和`[]byte`进行转换:
 ```text
 func main()  {
@@ -38,7 +37,7 @@ func main()  {
 }
 ```
 
-#### 1.1.1.1 `string`类型转换到`[]byte`类型
+### 1.1.1 `string`类型转换到`[]byte`类型
 我们对上面的代码执行如下指令`go tool compile -N -l -S ./string_to_byte/string.go`，可以看到调用的是`runtime.stringtoslicebyte`：
 ```text
 // runtime/string.go go 1.15.7
@@ -73,7 +72,7 @@ func rawbyteslice(size int) (b []byte) {
 这里分了两种状况，通过字符串长度来决定是否需要重新分配一块内存。也就是说预先定义了一个长度为`32`的数组，字符串的长度超过了这个数组的长度，就说明`[]byte`不够用了，需要重新分配一块内存了。这也算是一种优化吧，`32`是阈值，只有超过`32`才会进行内存分配。
 最后我们会通过调用`copy`方法实现string到[]byte的拷贝，具体实现在`src/runtime/slice.go`中的`slicestringcopy`方法，这里就不贴这段代码了，这段代码的核心思路就是：**将string的底层数组从头部复制n个到[]byte对应的底层数组中去**。
 
-#### 1.1.1.2 `[]byte`类型转换到`string`类型
+### 1.1.2 `[]byte`类型转换到`string`类型
 `[]byte`类型转换到`string`类型本质调用的就是`runtime.slicebytetostring`：
 ```text
 // 以下无关的代码片段
@@ -105,7 +104,7 @@ func slicebytetostring(buf *tmpBuf, ptr *byte, n int) (str string) {
 ```
 这段代码我们可以看出会根据`[]byte`的长度来决定是否重新分配内存，最后通过`memove`可以拷贝数组到字符串。
 
-### 1.1.2 string和[]byte强转换
+## 1.2 string和[]byte强转换
 标准的转换方法都会发生内存拷贝，所以为了减少内存拷贝和内存申请我们可以使用**强转换**的方式对两者进行转换。在标准库中有对这两种方法实现：
 ```text
 // runtime/string.go
@@ -135,7 +134,7 @@ type slice struct {
 ```
 唯一不同的就是`cap`字段，`array`和`str`是一致的，`len`是一致的，所以他们的内存布局上是对齐的，这样我们就可以直接通过`unsafe.Pointer`进行指针替换。
 
-### 1.1.3 两种转换如何取舍
+## 1.3 两种转换如何取舍
 当然是推荐大家使用标准转换方式了，毕竟标准转换方式是更安全的！但是如果你是在高性能场景下使用，是可以考虑使用强转换的方式的，但是要注意强转换的使用方式，他不是安全的，这里举个例子：
 ```text
 func stringtoslicebytetmp(s string) []byte {
@@ -159,8 +158,8 @@ fatal error: fault
 ```
 程序直接发生严重错误了，即使使用`defer`+`recover`也无法捕获。`string`类型是不能改变的，也就是底层数据是不能更改的，这里因为我们使用的是强转换的方式，那么`by`指向了`str`的底层数组，现在对这个数组中的元素进行更改，就会出现这个问题，导致整个程序`down`掉！
 
-## 1.2 slice
-### 1.2.1 切片的数据结构
+# 2 slice
+## 2.1 切片的数据结构
 切片本身并不是动态数组或者数组指针。它内部实现的数据结构通过指针引用底层数组，设定相关属性将数据读写操作限定在指定的区域内。**切片本身是一个只读对象，其工作机制类似数组指针的一种封装**。
 ```go
 type slice struct {
@@ -195,9 +194,9 @@ sliceHeader.Len = length
 sliceHeader.Data = uintptr(ptr)
 ```
 
-### 1.2.2 创建切片
+## 2.2 创建切片
 创建切片有两种形式，make 创建切片，空切片。
-#### 1.2.2.1 make 和切片字面量
+### 2.2.1 make 和切片字面量
 ```go
 func makeslice(et *_type, len, cap int) slice {
 	// 根据切片的数据类型，获取切片的最大容量
@@ -233,7 +232,7 @@ func makeslice64(et *_type, len64, cap64 int64) slice {
 }
 ```
 
-#### 1.2.2.2 nil 和空切片
+### 2.2.2 nil 和空切片
 nil 切片和空切片也是常用的。
 ```go
 var slice []int
@@ -247,10 +246,10 @@ slice := []int{ }
 ```
 ![[Pasted image 20250406163018.png]]
 
-### 1.2.3 切片扩容
-#### 1.2.3.1 1.18之前的扩容策略
+## 2.3 切片扩容
+### 2.3.1 1.18之前的扩容策略
 **在Go的1.18版本以前，是按照如下的规则来进行扩容：**
-- 首先判断，如果新申请容量（cap，新切片期望最小的容量）大于2倍的旧容量（old.cap），最终容量（newcap）就是新申请的容量（cap）
+- 首先判断，如果新申请容量（cap，新插入元素导致所需的容量）大于2倍的旧容量（old.cap），最终容量（newcap）就是新申请的容量（cap）
 - 否则判断，如果旧切片的长度小于1024，则最终容量(newcap)就是旧容量(old.cap)的两倍，即（newcap=doublecap）
 - 否则判断，如果旧切片长度大于等于1024，则最终容量（newcap）从旧容量（old.cap）开始循环增加原来的 1/4，即（newcap=old.cap,for {newcap += newcap/4}）直到最终容量（newcap）大于等于新申请的容量(cap)，即（newcap >= cap）
 - 如果最终容量（cap）计算值溢出，则最终容量（cap）就是新申请容量（cap）
@@ -351,12 +350,12 @@ func growslice(et *_type, old slice, cap int) slice {
 }
 ```
 
-#### 1.2.3.2 1.18及之后的扩容策略
+### 2.3.2 1.18及之后的扩容策略
 新版本的扩容策略：
 1. 首先判断，如果新申请容量（cap）大于2倍的旧容量（old.cap），最终容量（newcap）就是新申请的容量（cap）
 2. 否则判断，当原slice容量(oldcap)小于256的时候，新slice(newcap)容量为原来的2倍。
 3. 否则判断，原slice容量超过256，新slice容量循环 `newcap = oldcap + (oldcap+3*256) / 4`，直到>=cap。
-	1. 在1.25~2倍之间寻找一种相对平衡的规则。使用 `768 = 3 × 256` 作为经验值，使扩容过程更平滑。
+	1. **通过减小阈值并固定增加一个常数，使得优化后的扩容的系数在阈值前后不再会出现从2到1.25的突变**
 4. 如果最终容量（cap）计算值溢出，则最终容量（cap）就是新申请容量（cap）
 
 ```Go
@@ -383,199 +382,125 @@ func growslice(et *_type, old slice, cap int) slice {
 }
 ```
 
-## 1.3 map——1.24之前
-### 1.3.1 基本思想
-Go对map的设计采用了桶的思想，有一组组桶来装KV对，并且规定一个桶只能装**8个**KV对。
-假如我们有很多个KV对，只要桶够多，把它们分散在各个桶中，**那么就能将O(N)的时间复杂度缩小到O(N/bucketsNum)了**，只要给定合适的桶数，时间复杂度就≈O(1)。
+## 2.4 总结
+slice底层是一个结构体，包含三个字段：底层数组的指针引用、元素个数和容量。
+slice的扩容策略：
+1. 如果新申请容量(cap)大于2倍的旧容量(oldcap)，那么最终容量就是新申请容量
+2. 否则当旧容量小于256的时候，最终容量为原来的2倍。
+3. 否则当旧容量大于256，新容量(newcap)循环 `newcap = oldcap + (oldcap+3*256) / 4`，直到`>=cap`。
+	1. 这里通过引入常数 3\*256，让扩容系数从2倍（256时）平滑过渡到1.25倍
+4. 如果最终容量计算值溢出，则最终容量就是新申请容量
 
-#### 1.3.1.1 如何找到桶？
-采取的措施是使用哈希映射来解决。我们对hash函数的选取需要有一定的要求，它必须满足以下的性质：
-- hash的**可重入性**：相同的key，必定产生相同的hash值
-- hash的**离散性**：只要两个key不相同，不论相似度的高低，产生的hash值都会在整个输出域内均匀地离散化
-- hash的**单向性**：不可通过hash值反向寻找key
+# 3 map——1.24之前
+## 3.1 简介
+Go map 底层实现方式是 Hash 表。Go map 的数据被置入一个由桶组成的数组中，每个桶最多可以存放 8 个键值对。key的哈希值低位用于在数组中定位到桶，而高8位则用于在桶中区分键值对。
+每个桶最多存 8 个键值对，超了则会链接到额外的溢出桶。所以 Go map 基本数据结构是**hash数组+桶内的键值对数组+溢出的桶链表**。
+哈希表容量超过阈值需要扩容时，会分配一个新的桶数组，新数组的大小一般是旧数组的 2 倍。迁移数据时不会全量拷贝，因为耗时太大，Go 会在每次读写 Map 时以桶为单位做动态搬迁。
 
-输入是无限的，但是输出的长度却是固定有限的，所以必然会存在两个不同的key通过映射到了同一个hash值的情况上，这种情况称之为**hash冲突**。对于Go对hash冲突采取的策略，将会在下文提及。
+### 3.1.1 核心结构
+map 主要有两个核心结构，基础结构和桶结构：
+- hmap：map 的基础结构。 
+- bmap：存放 key-value 的桶结构。
 
-#### 1.3.1.2 如何保证桶平均的KV对数目是合理的？
-在Go中，引入了**负载因子（Load Factor）**的概念，对于一个map，假如存在`count`个键值对，`2^B`个桶，那么它必须满足以下方程：**「count <=LoadFactor*(2^B)」**，当count的值超过这个界限，就会引发map的扩容机制。`LoadFactor`在Go中，一般取值为6.5。
-
-#### 1.3.1.3 桶结构
-一个map会维护一个桶数组，每个桶可以存放八个键值对以及它的hash值，以及一个指向其溢出桶的指针。
-Go采用拉链法解决哈希冲突。桶数组中的每一个桶，严格来说应该是一个链表结构，它通过`overflow`指针链接了下一个键值对。若当前桶有8个链表节点了，就开辟一个新的溢出桶，放置在溢出桶里面。
-
-### 1.3.2 数据结构定义
-结构定义如下：
-```Go
+hmap定义：
+```go
 type hmap struct {
-	count     int // # live cells == size of map.  Must be first (used by len() builtin)
-	flags     uint8
-	B         uint8  // log_2 of # of buckets (can hold up to loadFactor * 2^B items)
-	noverflow uint16 // approximate number of overflow buckets; see incrnoverflow for details
-	hash0     uint32 // hash seed
- 
-	buckets    unsafe.Pointer // array of 2^B Buckets. may be nil if count==0.
-	oldbuckets unsafe.Pointer // previous bucket array of half the size, non-nil only when growing
-	nevacuate  uintptr        // progress counter for evacuation (buckets less than this have been evacuated)
- 
-	extra *mapextra // optional fields
-}
-```
-- `count`：标识当前map的键值对数量
-- `flags`：标识当前map的状态
-- `B`：2^B为map目前的总桶数
-- `noverflow`：溢出桶数量
-- `hash0`：哈希因子
-- `buckets`：指向桶数组
-- `oldbuckets`：扩容时存储旧的桶数组
-- `nevacuate`：待完成数据迁移的桶下标
-- `extra`：存储预分配的溢出桶
+	count     int // 元素的个数
+	flags     uint8 // 状态标记位。如是否被多线程读写、迭代器在使用新桶、迭代器在使用旧桶等
+	B         uint8 // 桶指数，表示 hash 数组中桶数量为 2^B（不包括溢出桶）。最大可存储元素数量为 loadFactor * 2^B
+	noverflow uint16 // 溢出桶的数量的近似值。详见函数 incrnoverflow()
+	hash0     uint32 // hash种子
 
-`mapextra`的定义如下：
-```Go
+	buckets    unsafe.Pointer // 指向2^B个桶组成的数组的指针。可能是 nil 如果 count 为 0
+	oldbuckets unsafe.Pointer // 指向长度为新桶数组一半的旧桶数组，仅在增长时为非零
+	nevacuate  uintptr // 进度计数器，表示扩容后搬迁的进度（小于该数值的桶已迁移）
+
+	extra *mapextra // 溢出桶
+}
+
 type mapextra struct {
-	overflow    *[]*bmap
-	oldoverflow *[]*bmap
- 
-	nextOverflow *bmap
+	overflow    *[]*bmap // 保存溢出桶链表
+	oldoverflow *[]*bmap // 保存旧溢出桶链表
+
+	nextOverflow *bmap // 下一个空闲溢出桶地址
 }
 ```
-- `overflow`：指向新的预分配溢出桶数组
-- `oldoverflow`：指向旧的预分配溢出桶数组
-- `nextoverflow`：指向下一个可被使用的溢出桶
 
-而bmap是一个桶的具体实现，源码如下：
-```Go
+bmap 定义：
+```go
 type bmap struct {
-	tophash [bucketCnt]uint8
+	tophash [bucketCnt]uint8 // 存储桶内 8 个 key 的 hash 值的高字节。tophash[0] < minTopHash 表示桶处于扩容迁移状态
 }
 ```
-虽然在数据定义上，只含有一个`tophash`，但是在内存上，可以通过直接计算得出下一个槽的位置，以及overflow指针的位置。所以为了便于理解，它的实际结构如下：
-```Go
-type bmap struct {
-	tophash [bucketCnt]uint8
-	keys [bucketCnt]T
-    values [bucketCnt]T
-    overflow unsafe.Pointer
+特别注意：实际分配内存时会申请一个更大的内存空间 A，A 的前 8 字节为 bmap，后面依次跟 8 个key、8 个 value、1 个溢出指针。把所有的 key 排在一起和所有的 value 排列在一起，而不是交替排列，这样的好处是在某些情况下可以省略掉内存对齐占用的空间。map 的桶结构实际指的是内存空间 A。
+
+另外，map.go 里很多函数的第 1 个入参是下面这个结构，从成员来看很明显，此结构标示了键值对和桶的类型和大小等必要信息。有了这个结构的信息，map.go 的代码就可以与键值对的具体数据类型解耦。所以 map.go 用内存偏移量和 unsafe.Pointer 指针来直接对内存进行存取，而无需关心 key 或 value 的具体类型：
+```go
+type maptype struct {
+	typ    _type
+	key    *_type
+	elem   *_type
+	bucket *_type // internal type representing a hash bucket
+	// function for hashing keys (ptr to key, seed) -> hash
+	hasher     func(unsafe.Pointer, uintptr) uintptr
+	keysize    uint8  // size of key slot
+	elemsize   uint8  // size of elem slot
+	bucketsize uint16 // size of bucket
+	flags      uint32
 }
 ```
+### 3.1.2 数据结构图
+创建 map 时，会初始化一个 hmap 结构体，同时分配一个足够大的内存空间 A。
+其中 A 的前段用于 hash 数组，A 的后段预留给溢出的桶。于是 `hmap.buckets` 指向 hash 数组，即 A 的首地址；`hmap.extra.nextOverflow` 初始时指向内存 A 中的后段，即 hash 数组结尾的下一个桶，也即第 1 个预留的溢出桶。
+所以当 hash 冲突需要使用到新的溢出桶时，会优先使用上述预留的溢出桶。`hmap.extra.nextOverflow` 依次往后偏移直到用完所有的溢出桶，才有可能会申请新的溢出桶空间。
+![[image-151.png]]
+当 map 的 key 和 value 都不是指针，并且 size 都小于 128 字节的情况下，会把 bmap 标记为不含指针，这样可以避免 gc 时扫描整个 hmap。但是，我们看 bmap 其实有一个 overflow 的字段，是指针类型的，破坏了 bmap 不含指针的设想。这时会把 overflow 移动到 extra 字段来，避免了 gc 扫描。
 
-### 1.3.3 主干流程
-#### 1.3.3.1 map的创建与初始化
-代码如下：
-```Go
-//makemap为make(map[k]v,hint)实现Go映射创建
-func makemap(t *maptype, hint int, h *hmap) *hmap {
-	// 1. makemap首先根据预分配的容量大小hint进行分配容量，若容量过大，则会置hint为0
-	mem, overflow := math.MulUintptr(uintptr(hint), t.Bucket.Size_)
-	if overflow || mem > maxAlloc {
-		hint = 0
-	}
- 
-	// 2. 通过new方法，初始化hmap
-	if h == nil {
-		h = new(hmap)
-	}
-	// 3. 通过`rand()`生成一个哈希因子
-	h.hash0 = uint32(rand())
- 
-	// 4. 获取哈希表的桶数量的对数B。（注意这里并不是直接计算log_2_hint，是要根据负载因子衡量桶的数量）
-	B := uint8(0)
-	for overLoadFactor(hint, B) {
-		B++
-	}
-	h.B = B
-	
-    // 5. 若B==0，那么buckets将会采取懒创建的策略，会在未来要写map的方法mapassign中创建。
-    // 若B!=0，初始化哈希表，使用`makeBucketArray`方法构造桶数组。
-    // 如果map的容量过大，会提前申请一批溢出桶。
-	if h.B != 0 {
-		var nextOverflow *bmap
-		h.buckets, nextOverflow = makeBucketArray(t, h.B, nil)
-		if nextOverflow != nil {
-			h.extra = new(mapextra)
-			h.extra.nextOverflow = nextOverflow
-		}
-	}
- 
-	return h
-}
+## 3.2 实现机制
+### 3.2.1 增加或修改
+步骤：
+1. 参数合法性检测与 hash 值计算
+2. 定位 key 在 hash 表中的位置
+	1. 用 key 的 hash 值的低位定位 hash 数组的下标偏移量，用 hash 值的高 8 位用于在桶内定位键值对
+	2. 怎么定位桶位置？首先用 B 算出掩码，例如B=3、掩码111；然后用掩码&hash获得低位；桶位置偏移量=低位值\*桶大小
+3. 进一步定位 key 可以插入的桶及桶中的位置
+	1. 两轮循环，外层循环遍历 hash 桶及其指向的溢出链表，内层循环则在桶内遍历。如果在链表上的桶内找到了 key，则直接更新 key；否则进入第 4 步插入新 key。
+	2. 为什么不直接用key比较？因为hash高位对比快，能快速对比出不一样的情况；hash一样，则再用key对比
+4. 插入新 key
+	1. 插入新 key 首先需要判断 map 是否需要扩容
+	2. 如果不需要扩容且找到了 key 的插入位置，则直接插入；否则说明链表上的桶都满了，这时链接一个新的溢出桶进来。
+	3. 注意：当 key 或 value 的大小超过一定值时，桶只存储 key 或 value 的指针。
 
-/*
-返回的两个值为：
-- 计算二值的乘积`a*b`
-- 乘积是否溢出
+### 3.2.2 删除
+由于定位 key 位置的方式是查找 tophash，所以删除操作对 tophash 的处理是关键：
+1. map 首先将对应位置的 `tophash[i]` 置为 `emptyOne=1`，表示该位置已被删除；
+2. 如果 `tophash[i]` 不是整个链表的最后一个有效位置（即最后一个元素），则只置 `emptyOne` 标志。该位置被删除但未释放，后续插入操作不能使用此位置
+3. 如果 `tophash[i]` 是链表最后一个有效位置了，则把链表最后面的所有标志为 `emptyOne` 的位置，都置为 `emptyRest=0`。置为 `emptyRest` 的位置可以在后续的插入操作中被使用。
 
-如果a|b的二进制表示，没有超过1<<(4*goarch.PtrSize)，那么它们的乘积也不会溢出。在64位操作系统中，goarch.PtrSize的大小为8。否则，则通过a*b>MaxUintptr来判断，MaxUintptr为2^64-1.
-*/
-func MulUintptr(a, b uintptr) (uintptr, bool) {
-	if a|b < 1<<(4*goarch.PtrSize) || a == 0 {
-		return a * b, false
-	}
-	overflow := b > MaxUintptr/a
-	return a * b, overflow
-}
+事实上，Go 数据一旦被插入到桶的确切位置，map 是不会再移动该数据在桶中的位置了。这种删除方式，以少量空间避免了被删除的数据再次插入时出现数据移动的情况。
 
-/*
-在这里，`bucketCnt`为8。若count<=8，则直接返回false，只需要将键值对放在一个桶中即可。否则，计算当前的**哈希表的容量*负载因子**，若count的数量＞这个值，将会扩容哈希表，即增大B。
-*/
-func overLoadFactor(count int, B uint8) bool {
-	return count > bucketCnt && uintptr(count) > loadFactorNum*(bucketShift(B)/loadFactorDen)
-}
-```
+### 3.2.3 扩容
+触发扩容有两个条件：
+1. 当前不处在 growing 状态
+2. 元素过多or溢出桶多
+	1. 元素个数大于hash桶数量(2^B)\*6.5。注意这里的 hash 桶指的是 hash 数组中的桶，不包括溢出的桶；
+	2. 或者，溢出桶数量noverflow>=32768(1<<15) || noverflow>=hash桶数量
 
-##### 1.3.3.1.1 makeBucketArray方法
-代码如下：
-```Go
-func makeBucketArray(t *maptype, b uint8, dirtyalloc unsafe.Pointer) (buckets unsafe.Pointer, nextOverflow *bmap) {
-    //初始桶数量
-	base := bucketShift(b)
-    //最终桶数量，初始和base相同
-	nbuckets := base
-	//溢出桶预分配
-	if b >= 4 {
-		nbuckets += bucketShift(b - 4)
-        //计算分配的总内存大小
-		sz := t.Bucket.Size_ * nbuckets
-        //将内存大小向上对齐到合适的大小，是内存分配的一个优化。
-		up := roundupsize(sz, t.Bucket.PtrBytes == 0)
-		if up != sz {
-            //调整桶数量，使得内存被充分利用
-			nbuckets = up / t.Bucket.Size_
-		}
-	}
- 
-	if dirtyalloc == nil {
-        //分配nbuckets个桶
-		buckets = newarray(t.Bucket, int(nbuckets))
-	} else {
-		//复用旧的内存
-		buckets = dirtyalloc
-		size := t.Bucket.Size_ * nbuckets
-		if t.Bucket.PtrBytes != 0 {
-			memclrHasPointers(buckets, size)
-		} else {
-			memclrNoHeapPointers(buckets, size)
-		}
-	}
- 
-	if base != nbuckets {
-		//如果base和nbuckets的数量不同，说明预分配了溢出桶，需要设置溢出桶链表
-        //指向第一个可用的预分配溢出桶，计算出溢出桶的起始位置
-		nextOverflow = (*bmap)(add(buckets, base*uintptr(t.BucketSize)))
-        //最后一个预分配的溢出桶的位置
-		last := (*bmap)(add(buckets, (nbuckets-1)*uintptr(t.BucketSize)))
-        //将最后一个溢出桶的指针设置为buckets，形成一个环形链表，用于后面的分配判断
-		last.setoverflow(t, (*bmap)(buckets))
-	}
-	return buckets, nextOverflow
-}
-```
-`makeBucketArray`方法会根据初始的对数B来判断是否需要分配溢出桶。若B>=4，则需要预分配的溢出桶数量为2^(B-4)。确定好桶的总数后，会根据`dirtyalloc`是否为nil来判断是否需要新开辟空间。最后会返回指向桶数组的指针以及指向首个溢出桶位置的指针。
-当最后返回到上层的`makemap`方法中，最终创造出的`map`结构如图：
-![[Pasted image 20250406175604.png]]
+Go map 有两种扩容类型：
+1. 一种是真扩容，扩到 hash 桶数量为原来的两倍，针对元素数量过多的情况；
+2. 一种是假扩容，hash 桶数量不变，只是把元素搬迁到新的 map，针对溢出桶过多的情况。此时元素没那么多，很多桶没装满，但是因为不断插入、删除，导致emptyOne过多、使得溢出桶过多。假扩容会消除emptyOne，减少溢出桶
+	1. 但是假扩容解决不了key 哈希都一样、落到同一个 bucket 里的情况
+
+搬迁的工作是增量搬迁的，在每次插入和删除操作时执行一次搬迁工作：
+1. 每执行一次插入或删除，都会调用 growWork() 函数搬迁 0~2 个 hash 桶
+2. 搬迁是以 hash 桶为单位的，包含对应的 hash 桶和这个桶的溢出链表；
+3. 被 delete 掉的元素（emptyone 标志）会被舍弃不进行搬迁。
+
+minTopHash：当一个 cell 的 tophash 值小于 minTopHash 时，标志这个 cell 的迁移状态。因为这个状态值是放在 tophash 数组里，为了和正常的哈希值区分开，会给 key 计算出来的哈希值加一个增量：minTopHash。这样就能区分正常的 top hash 值和表示状态的哈希值。
 
 ---
-# 2 引用
+# 4 引用
 slice原理：https://halfrost.com/go_slice/#toc-0
 slice新扩容策略：https://cloud.tencent.com/developer/article/2309846
+map实现原理：https://cloud.tencent.com/developer/article/1746966
 map底层原理（1.24之前）：https://www.cnblogs.com/MelonTe/p/18753711

@@ -3,5 +3,6 @@
   "newFileFolderPath": "笔记",
   "attachmentFolderPath": "附件",
   "readableLineLength": true,
-  "alwaysUpdateLinks": true
+  "alwaysUpdateLinks": true,
+  "promptDelete": false
 }

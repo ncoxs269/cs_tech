@@ -485,85 +485,34 @@ func (c *timerCtx) cancel(removeFromParent bool, err error) {
 ## 1.4 缺点
 - `context`可以携带值，但是没有任何限制，类型和大小都没有限制。还有一个问题就是通过`context`携带值不如显式传值舒服，可读性变差了。
 - `context`取消和自动取消的错误返回不够友好，无法自定义错误，出现难以排查的问题时不好排查。
-- - 创建衍生节点实际是创建一个个链表节点，其时间复杂度为O(n)，节点多了会导致效率变低。
+- 创建衍生节点实际是创建一个个链表节点，其时间复杂度为O(n)，节点多了会导致效率变低。
 
-# 2 chan
-## 2.1 channel 简介
-golang 的 channel 就是一个环形队列的实现。
+## 1.5 总结
+`context`的作用就是在不同的协程之间同步数据、取消信号以及超时控制。
+同步数据依靠的是 `WithValue` 方法，它会创建一个新的context对象，存储所给的键值对。在获取键值对时，先从当前`context`中查找，没有找到会在从父`context`中查找，直到找到或返回null。
+取消信号依靠的是 `WithCancel` 方法，它会返回一个新的cancelContext对象和对应的取消函数。这个新的context对象包含一个互斥锁，用来保证线程安全；一个channel，使用Done方法可以获取这个channel，根据这个channel是否被关闭，判断context是否被取消；还有一个子context map，用来在取消时把子context也都取消掉。
+超时控制依靠的是 `WithTimeout` 和 `WithDeadline` 方法。底层用的是cancelContext和定时器，定时器在超时后调用cancelContext的取消方法。
 
-它有以下用法和底层实现：
-1. 创建一个 channel ，这个对应了实际函数是 `makechan` 。位于 `runtime/chan.go` 文件里（下同）。
-2. chan 入队，对应函数实现 `chansend` 。
-3. chan 出队，分为单个值和返回ok两种方式，对应函数分别是 `chanrecv1` 和 `chanrecv2` 。
-4. 在 select 中入队，对应函数实现为 `selectnbsend` 。
-5. 在 select 中出队，对应函数实现为 `selectnbrecv`、`selectnbrecv2`。
-6. for-range，对应使用函数 `chanrecv2`。
-
-## 2.2 源码解析
-### 2.2.1 makechan
-```go
-func makechan(t *chantype, size int) *hchan {
-}
-```
-其中 t 参数是指明元素类型：
-```go
-type chantype struct {
- typ  _type
- elem *_type
- dir  uintptr
-}
-```
-`makechan`做了两件事：
-1. 参数校验
-2. 初始化 **hchan** 结构
-
-hchan 分配内存简单的分为三种情况：
-```go
-switch {
-// no buffer 的场景，这种 channel 可以看成 pipe；
-case mem == 0:
-    c = (*hchan)(mallocgc(hchanSize, nil, true))
-    c.buf = c.raceaddr()
-// channel 元素不含指针的场景，那么是分配出一个大内存块；
-case elem.ptrdata == 0:
-    c = (*hchan)(mallocgc(hchanSize+mem, nil, true))
-    c.buf = add(unsafe.Pointer(c), hchanSize)
-// 默认场景，hchan 结构体和 buffer 内存块单独分配；
-default:
-    c = new(hchan)
-    c.buf = mallocgc(mem, elem, true)
-}
-```
-除了 hchan 结构体本身的内存分配，该结构体初始化的关键在于四个字段：
-```go
-// channel 的元素 buffer 数组地址；
-c.buf = mallocgc(mem, elem, true)
-// channel 元素大小，如果是 int，那么就是 8 字节；
-c.elemsize = uint16(elem.size)
-// 元素类型，这样就知道 channel 里面每个元素究竟是啥了；
-c.elemtype = elem
-// 元素 buffer 数组的大小，比如 make(chan int, 2)，那么这里赋值的就是 2；
-c.dataqsiz = uint(size)
-```
-
-### 2.2.2 hchan 结构
+# 2 channel
+## 2.1 数据结构
+Go 语言的 Channel 在运行时使用 **runtime.hchan** 结构体表示。我们在 Go 语言中创建新的 Channel 时，实际上创建的都是如下所示的结构：
 ```go
 type hchan struct {
- qcount   uint           // queue 里面有效用户元素，这个字段是在元素出对，入队改变的；
- dataqsiz uint           // 初始化的时候赋值，之后不再改变，指明数组 buffer 的大小；
- buf      unsafe.Pointer // 指明 buffer 数组的地址，初始化赋值，之后不会再改变；
- elemsize uint16  // 指明元素的大小，和 dataqsiz 配合使用就能知道 buffer 内存块的大小了；
- closed   uint32
- elemtype *_type // 元素类型，初始化赋值；
- sendx    uint   // send index
- recvx    uint   // receive index
- recvq    waitq  // 等待 recv 响应的对象列表，抽象成 waiters
- sendq    waitq  // 等待 sedn 响应的对象列表，抽象成 waiters
+ qcount   uint     // 循环队列元素的数量
+ dataqsiz uint    // 循环队列的大小
+ buf      unsafe.Pointer // 循环队列缓冲区的数据指针
+ elemsize uint16   // chan中元素的大小
+ closed   uint32   // 是否已close
+ elemtype *_type   // chan 中元素类型
+ sendx    uint   // send 发送操作在 buf 中的位置
+ recvx    uint   // recv 接收操作在 buf 中的位置
+ recvq    waitq   // receiver的等待队列，如果消费者因为没有数据可读而被阻塞了，就会被加入到 recvq 队列中。
+ sendq    waitq   // senderl的等待队列，如果生产者因为 buf 满了而阻塞，会被加入到 sendq 队列中。
 
- // 互斥资源的保护锁，官方特意说明，在持有本互斥锁的时候，绝对不要修改 Goroutine 的状态，不能很有可能在栈扩缩容的时候，出现死锁
- lock mutex
+ lock mutex    // 互斥锁，保护所有字段
 }
 ```
+可以理解为**循环队列+等待队列+互斥锁**。
 
 channel 常常会因为两种情况阻塞，1）投递的时候没有空间了，2）取出的时候还未有元素。这就就涉及到 goroutine 阻塞和 goroutine 唤醒，这个功能就跟 `recvq`，`sendq` 这两个字段有关。
 waitq 类型其实就是一个双向列表的实现，和 linux 里面的 LIST 实现非常相像。
@@ -574,7 +523,9 @@ type waitq struct {
 }
 ```
 
-### 2.2.3 chansend
+## 2.2 发送数据
+Go 语言中可以使用 ch <- i 向 chan 中发送数据。
+我们看下 **chansend** 源码，Go 编译器在向 chan 发送数据时，会将 send 转换成 chansend1 函数。如下：
 ```go
 func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
     // channel 的所有操作，都在互斥锁下；
@@ -650,9 +601,10 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 }
 ```
 总结来说：
-1. 场景一：如果有人（ goroutine ）等着取 channel 的元素，这种场景最快，直接把元素给他就完了，然后把它唤醒，hchan 本身递增下 ringbuffer 索引；
-2. 场景二：如果 ringbuffer 还有空间，那么就把元素存着，这种也是场景的流程，存和取走的是异步流程，可以把 channel 理解成消息队列，生产者和消费者解耦；
-3. 场景三：ringbuffer 没空间，这个时候就要是否需要 block 了，一般来讲，`c <- x` 编译出的代码都是 `block = true` ，那么什么时候 chansend 的 block 参数会是 false 呢？答案是：select 的时候；
+1. chan 是 nil 会阻塞调用者，已经 close 了会panic
+2. 场景一：如果有人（ goroutine ）等着取 channel 的元素，这种场景最快，直接把元素给他就完了，然后把它唤醒，hchan 本身递增下 ringbuffer 索引；
+3. 场景二：如果 ringbuffer 还有空间，那么就把元素存着，这种也是场景的流程，存和取走的是异步流程，可以把 channel 理解成消息队列，生产者和消费者解耦；
+4. 场景三：ringbuffer 没空间，这个时候就要是否需要 block 了，一般来讲，`c <- x` 编译出的代码都是 `block = true` ，那么什么时候 chansend 的 block 参数会是 false 呢？答案是：select 的时候；
 
 chansend 返回值标明元素是否 push 入队成功，成功的话，返回值为 true，否则 false 。
 
@@ -664,7 +616,7 @@ func selectnbsend(c *hchan, elem unsafe.Pointer) (selected bool) {
 }
 ```
 
-### 2.2.4 chanrecv
+## 2.3 接收数据
 ```go
 <- c
 // 对应着
@@ -768,6 +720,16 @@ chanrecv 函数的返回值有两个值，selected，received。其中 selected 
 2. 如果是阻塞模式（ block=true ），如果 chan 已经 closed 了，那么返回的是 （selected=true，received=false），说明需要进到 select 的分支，但是是没有取到元素的；
 3. 如果是阻塞模式，chan 还是正常状态，那么返回（selected=true，recived=true），说明正常取到了元素；
 
+## 2.4 关闭
+Go 语言中关闭一个 chan 用自带的 close 函数，编译器会转成调用 closechan，我们看下源码：
+![[image-156.png]]
+- close 一个 nil 的 chan 会出现 panic；
+- close 一个 已经 closed 的 chan，会出现 panic；
+- 当 chan 不为 nil 也不为 closed，才能 close 成功，从而把等待队列中的 sender（writer）和 receiver（reader）从队列中全部移除并唤醒。
+
+## 2.5 总结
+chan 的底层结构是**循环队列+等待队列+互斥锁**，循环队列用来存储元素，等待队列用来记录被阻塞的发送和接受协程，互斥锁用来防止并发冲突。
+
 # 3 锁机制
 ## 3.1 简介
 在 Golang 里有专门的方法来实现锁，就是 sync 包，这个包有两个很重要的锁类型。一个叫 Mutex， 利用它可以实现互斥锁。一个叫 RWMutex，利用它可以实现读写锁。
@@ -789,6 +751,7 @@ type Mutex struct {
 - 1位表示是否处于饥饿状态
 - 剩下29位表示阻塞的协程数
 ![[image-128.png]]
+锁状态包含：饥饿锁定、饥饿未锁定、正常锁定、正常未锁定。
 
 `sema`表示用于阻塞和唤醒`goroutine`的信号量。
 ```go
@@ -800,7 +763,7 @@ runtime_Semrelease(&m.sema, false, 1)
 ```
 
 ### 3.2.2 乐观到悲观
-**go中的sync.Mutex制定了锁的升级过程，这个过程就是从乐观转换为悲观**：首先保持乐观，用自旋+CAS的策略竞争锁，当到达一定条件之后，判断为过于激烈，转为阻塞+唤醒模式。
+**go中的sync.Mutex制定了锁的升级过程，这个过程就是从乐观转换为悲观**：首先保持乐观，用**自旋+CAS**的策略竞争锁，当到达一定条件之后，判断为过于激烈，转为**阻塞+唤醒**模式。
 1. 当自旋达到4次之后还没有结果之后；  
 2. CPU单核或者gmp模型中仅有1个P调度器（这个时候自旋，其他的goroutine根本没机会释放锁，自旋纯属空转）；  
 3. 当前P的执行队列中仍有待执行的G（避免因为自旋影响到GMP的调度效率）。
@@ -1028,6 +991,14 @@ func (m *Mutex) unlockSlow(new int32) {
 		2. 否则等待协程数-1，锁的唤醒标志设为1，再结束
 	2. 否则处于饥饿模式，调用信号量唤醒函数，唤醒等待队列第一个协程
 
+### 3.2.6 总结
+Go的互斥锁主要靠CAS、自旋和信号量实现。互斥锁的锁定有一个升级过程，即从**乐观到悲观**：首先保持乐观，用**自旋+CAS**的策略竞争锁；当到达一定条件后（例如自旋次数过多），判断为过于激烈，转为**阻塞+唤醒**模式。这样的话，就能在并发度低和高的时候，都能保持良好的性能。
+此外，互斥锁还引入了**饥饿模式**，在锁的性能和公平之间保持平衡。
+- 互斥锁有一个协程等待队列
+- 在正常模式下，等待队列里面的协程要和最新来抢占锁的协程竞争锁。因为新的协程正在cpu上运行，被唤醒的协程还要进行调度才能进入状态，因此大概率竞争不过新来的协程。正常模式锁的切换效率较高，但是可能会导致等待队列中的协程迟迟拿不到锁
+- 当等待队列的协程等待时间过长时，锁会切换到饥饿模式。这个模式下，新来的协程会被加入到等待队列的队尾，而队头的协程会获取锁。这样保证了公平性，防止协程饥饿。
+- 当后续等待队列的协程等待时间不长、或者等待队列没有协程时，会退出饥饿模式。
+
 ## 3.3 RWMutex-读写锁
 读写锁就是一种能保证：
 - 并发读操作之间不互斥；
@@ -1133,13 +1104,12 @@ func (rw *RWMutex) rUnlockSlow(r int32) {
 
 ### 3.3.3 总结
 将上面这些过程梳理一下：
-1. **写锁之间的阻塞，是通过一个阻塞锁实现的；而写锁、读锁的阻塞，是通过读锁协程数实现的**
-2. 如果没有writer请求进来，则每个reader开始后只是将readerCount增1，完成后将readerCount减1，整个过程不阻塞，这样就做到“并发读操作之间不互斥”；
-3. 当有writer请求进来时首先通过互斥锁阻塞住新来的writer，做到“并发写操作之间互斥”；
-	1. 然后将readerCount改成一个很小的值，从而阻塞住新来的reader；
-	2. 记录writer进来之前未完成的reader数量，等待它们都完成后再唤醒自己
-	3. 这样就做到了“并发读操作和写操作互斥”；
-4. writer结束后将readerCount置回原来的值，保证新的reader不会被阻塞，然后唤醒之前等待的reader，再将互斥锁释放，使后续writer不会被阻塞。
+1. **写锁之间的阻塞，是通过一个互斥锁实现的；而写锁、读锁的阻塞，是通过读锁协程数实现的**
+2. 如果没有写锁请求进来，则每个读锁只是将读锁协程数增1，完成后将读锁协程数减1，整个过程不阻塞，这样就做到“并发读操作之间不互斥”；
+3. 当有写锁请求进来时:
+	1. 首先通过互斥锁阻塞住新来的写锁，做到“并发写操作之间互斥”；
+	2. 然后将读锁协程数改成一个很小的值，从而阻塞住新来的读锁。并且记录写锁进来之前的读锁协程数，解锁后再复写回去。这样就做到了“并发读操作和写操作互斥”；
+4. 解锁结束后将读锁协程数置回原来的值，保证新的读锁不会被阻塞，然后唤醒之前等待的读协程，最后将互斥锁释放，使后续写锁请求不会被阻塞。
 
 ---
 # 4 引用
