@@ -35,8 +35,7 @@
               "title": "系统设计-秒杀系统总结"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -157,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/系统设计-秒杀系统总结.md",
+                "file": "笔记/系统设计-秒杀系统.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "系统设计-秒杀系统总结 的大纲"
+              "title": "系统设计-秒杀系统 的大纲"
             }
           }
         ],
@@ -184,10 +183,11 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "1e1bf15dbf71ceb3",
+  "active": "8a8c29a4dc0a861b",
   "lastOpenFiles": [
-    "笔记/系统设计-秒杀系统.md",
     "笔记/系统设计-秒杀系统总结.md",
+    "笔记/系统设计-秒杀系统.md",
+    "笔记/Redis-应用.md",
     "笔记/MySQL-分库分表.md",
     "笔记/场景题和设计题.md",
     "附件/image-204.png",
@@ -206,7 +206,6 @@
     "笔记/[[一些基础知识.md",
     "笔记/Linux.md",
     "笔记/计算机网络.md",
-    "笔记/Redis-应用.md",
     "笔记/分布式-事务.md",
     "笔记/设计模式.md",
     "笔记/未命名.base",
