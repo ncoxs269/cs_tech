@@ -186,10 +186,10 @@
   },
   "active": "1e1bf15dbf71ceb3",
   "lastOpenFiles": [
-    "笔记/Redis-持久化与监控.md",
-    "笔记/系统设计-秒杀系统总结.md",
-    "笔记/MySQL-日志与主备.md",
     "笔记/Redis-应用.md",
+    "笔记/系统设计-秒杀系统总结.md",
+    "笔记/Redis-持久化与监控.md",
+    "笔记/MySQL-日志与主备.md",
     "笔记/Redis-BLock实现.md",
     "笔记/系统设计-秒杀系统.md",
     "笔记/一些基础知识.md",
