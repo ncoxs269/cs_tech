@@ -22,21 +22,35 @@
             }
           },
           {
-            "id": "1e1bf15dbf71ceb3",
+            "id": "89b80b02d2251b41",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "笔记/系统设计-秒杀系统总结.md",
+                "file": "笔记/MySQL.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "系统设计-秒杀系统总结"
+              "title": "MySQL"
+            }
+          },
+          {
+            "id": "11b3ae7ec4620d34",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "笔记/MySQL-事务.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "MySQL-事务"
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -157,13 +171,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/系统设计-秒杀系统总结.md",
+                "file": "笔记/MySQL-事务.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "系统设计-秒杀系统总结 的大纲"
+              "title": "MySQL-事务 的大纲"
             }
           }
         ],
@@ -184,26 +198,29 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "1e1bf15dbf71ceb3",
+  "active": "11b3ae7ec4620d34",
   "lastOpenFiles": [
-    "笔记/Redis-应用.md",
-    "笔记/系统设计-秒杀系统总结.md",
-    "笔记/Redis-持久化与监控.md",
     "笔记/MySQL-日志与主备.md",
-    "笔记/Redis-BLock实现.md",
+    "笔记/MySQL.md",
+    "笔记/MySQL-事务.md",
+    "笔记/MySQL-索引.md",
+    "笔记/MySQL-锁.md",
+    "笔记/MySQL-排序.md",
+    "笔记/MySQL-分库分表.md",
     "笔记/系统设计-秒杀系统.md",
+    "笔记/系统设计-秒杀系统总结.md",
+    "笔记/Redis-应用.md",
+    "笔记/Redis-持久化与监控.md",
+    "笔记/Redis-BLock实现.md",
     "笔记/一些基础知识.md",
     "笔记/分布式-事务.md",
     "笔记/消息队列.md",
-    "笔记/MySQL-分库分表.md",
     "笔记/场景题和设计题.md",
     "附件/image-204.png",
     "附件/image-203.png",
     "附件/image-202.png",
     "附件/image-201.png",
     "附件/image-200.png",
-    "笔记/MySQL-索引.md",
-    "笔记/MySQL-锁.md",
     "附件/image-199.png",
     "附件/image-198.png",
     "附件/image-197.png",
@@ -220,9 +237,6 @@
     "笔记/分布式-共识与算法.md",
     "模板/MOC(map of contents).md",
     "笔记/Go八股.md",
-    "笔记/Go数据结构.md",
-    "笔记/Go并发原理与工具.md",
-    "笔记/Go并发.md",
     "笔记/未命名 1.base",
     "笔记/未命名 2.base",
     "附件/-1webp",
