@@ -200,11 +200,11 @@
   },
   "active": "11b3ae7ec4620d34",
   "lastOpenFiles": [
-    "笔记/MySQL-日志与主备.md",
     "笔记/MySQL.md",
     "笔记/MySQL-事务.md",
-    "笔记/MySQL-索引.md",
+    "笔记/MySQL-日志与主备.md",
     "笔记/MySQL-锁.md",
+    "笔记/MySQL-索引.md",
     "笔记/MySQL-排序.md",
     "笔记/MySQL-分库分表.md",
     "笔记/系统设计-秒杀系统.md",
