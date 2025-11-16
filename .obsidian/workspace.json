@@ -201,6 +201,7 @@
   "active": "d42d67baf7b0db8c",
   "lastOpenFiles": [
     "笔记/MySQL.md",
+    "笔记/MySQL-索引.md",
     "笔记/MySQL-事务.md",
     "笔记/MySQL-锁.md",
     "笔记/系统设计-秒杀系统.md",
@@ -212,7 +213,6 @@
     "笔记/Redis-持久化与监控.md",
     "笔记/MySQL-日志与主备.md",
     "笔记/MySQL-分库分表.md",
-    "笔记/MySQL-索引.md",
     "笔记/MySQL-排序.md",
     "笔记/系统设计-秒杀系统总结.md",
     "笔记/Redis-应用.md",
