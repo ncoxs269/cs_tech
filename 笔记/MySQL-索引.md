@@ -624,6 +624,7 @@ mysql> select * from  (select * from t where (a between 1 and 1000)  and (b betw
 - 扫描行数是通过统计信息估算的，这个统计信息是索引的基数，也就是索引不同值的个数。
 	- MySQL通过采样统计估算基数，InnoDB 会选择 N 个数据页，统计这些页面上的不同值，得到一个平均值，然后乘以页面数就得到了基数。
 	- 当变更的数据行数超过 1/M 的时候，会自动触发重新做一次索引统计。
+- TODO：还需要进一步学习统计信息的知识
 - `analyze table t` 命令，可以用来重新统计索引信息。
 - sql 中采用 `force index` 可以强行选择一个索引。
 
