@@ -35,8 +35,7 @@
               "title": "MySQL-分库分表"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -157,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/MySQL-分库分表.md",
+                "file": "笔记/MySQL.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "MySQL-分库分表 的大纲"
+              "title": "MySQL 的大纲"
             }
           }
         ],
@@ -184,10 +183,10 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "b9fe904a403e166a",
+  "active": "3cbfb16a32217cd7",
   "lastOpenFiles": [
-    "笔记/MySQL.md",
     "笔记/MySQL-分库分表.md",
+    "笔记/MySQL.md",
     "笔记/一些基础知识.md",
     "笔记/Redis-集群.md",
     "笔记/场景题和设计题.md",
