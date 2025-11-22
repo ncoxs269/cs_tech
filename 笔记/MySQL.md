@@ -31,6 +31,7 @@ redo log和binlog：[[MySQL-日志与主备#1.6 总结]]
 
 explain
 分库分表
+- TODO：怎么用go实现分库分表的增删改查
 
 # 2 基础架构
 ![[image-27.png]]
