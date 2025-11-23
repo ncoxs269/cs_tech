@@ -12,6 +12,7 @@ redo log和binlog：[[MySQL-日志与主备#1.6 总结]]
 
 索引：
 - 索引模型：[[MySQL-索引#1.5 总结]]
+	- 一页存多少数据
 - 索引优化：[[MySQL-索引#2.8 总结]]
 - 唯一索引、普通索引和change buffer：[[MySQL-索引#3.5 总结]]
 - 优化器的执行代价统计：[[MySQL-索引#4.4 总结]]
@@ -29,13 +30,29 @@ redo log和binlog：[[MySQL-日志与主备#1.6 总结]]
 	- 间隙锁详解
 	- 死锁排查详解
 
-分库分表
+分库分表：[[MySQL-分库分表]]
 - TODO：
 	- 总结
 	- 怎么用go实现分库分表的增删改查
 	- 范围分库，生命周期长的数据怎么处理
 
-explain
+MySQL有哪些优化手段：[[MySQL-优化和问题排查#1.6 总结]]
+MySQL如何评估SQL：[[MySQL-优化和问题排查#2.4 总结]]
+
+其他：
+-  InnoDB和MyISAM有什么区别？
+	- InnoDB支持事务，MyISAM不支持
+	- InnoDB支持行锁，MyISAM只支持表锁
+	- MyISAM在读写过程中相互阻塞，InnoDB的读写阻塞和隔离级别相关
+	- InnoDB支持外键约束，MyISAM不支持
+	- InnoDB使用聚集索引，数据文件和主键索引绑定在一起；MyISAM 使用非聚集索引，索引和数据文件是分离的
+
+待学：
+- 排序
+- JOIN
+- 数据库范式
+- 主备原理
+- 分区表
 
 # 2 基础架构
 ![[image-27.png]]
