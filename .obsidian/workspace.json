@@ -34,9 +34,23 @@
               "icon": "lucide-file",
               "title": "Redis-应用"
             }
+          },
+          {
+            "id": "2c4c4e89602b301f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "笔记/Redis-持久化与监控.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Redis-持久化与监控"
+            }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -157,13 +171,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/Redis-应用.md",
+                "file": "笔记/Redis-持久化与监控.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Redis-应用 的大纲"
+              "title": "Redis-持久化与监控 的大纲"
             }
           }
         ],
@@ -184,17 +198,18 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "118067baae1f9296",
+  "active": "2c4c4e89602b301f",
   "lastOpenFiles": [
+    "笔记/Redis-应用.md",
+    "笔记/Redis-持久化与监控.md",
     "笔记/Redis.md",
+    "笔记/MySQL-锁.md",
     "笔记/Redis-集群.md",
     "笔记/分布式-共识与算法.md",
     "笔记/Redis-数据结构.md",
-    "笔记/Redis-持久化与监控.md",
     "笔记/MySQL.md",
     "笔记/MySQL-优化和问题排查.md",
     "笔记/Go反射与泛型.md",
-    "笔记/MySQL-锁.md",
     "笔记/MySQL-索引.md",
     "笔记/MySQL-分库分表.md",
     "笔记/MySQL-排序.md",
@@ -209,7 +224,6 @@
     "笔记/MySQL-事务.md",
     "笔记/Redis-线程与内存模型.md",
     "笔记/系统设计-秒杀系统总结.md",
-    "笔记/Redis-应用.md",
     "笔记/Redis-BLock实现.md",
     "笔记/分布式-事务.md",
     "笔记/消息队列.md",
