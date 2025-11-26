@@ -22,35 +22,20 @@
             }
           },
           {
-            "id": "118067baae1f9296",
+            "id": "9ed78998aad892a0",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "笔记/Redis-应用.md",
+                "file": "笔记/Redis-数据结构.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Redis-应用"
-            }
-          },
-          {
-            "id": "5900c3fd664e1560",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "笔记/Redis-线程与内存模型.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Redis-线程与内存模型"
+              "title": "Redis-数据结构"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -171,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/Redis-线程与内存模型.md",
+                "file": "笔记/Redis.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Redis-线程与内存模型 的大纲"
+              "title": "Redis 的大纲"
             }
           }
         ],
@@ -198,16 +183,18 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "5900c3fd664e1560",
+  "active": "3775f7884dc33beb",
   "lastOpenFiles": [
-    "笔记/Redis-应用.md",
+    "笔记/Redis-数据结构.md",
     "笔记/Redis.md",
+    "笔记/Redis-问题和优化.md",
+    "笔记/Redis-应用.md",
+    "笔记/Redis-BLock实现.md",
     "笔记/Redis-线程与内存模型.md",
     "笔记/Redis-持久化与监控.md",
     "笔记/MySQL-锁.md",
     "笔记/Redis-集群.md",
     "笔记/分布式-共识与算法.md",
-    "笔记/Redis-数据结构.md",
     "笔记/MySQL.md",
     "笔记/MySQL-优化和问题排查.md",
     "笔记/Go反射与泛型.md",
@@ -224,7 +211,6 @@
     "笔记/系统设计-秒杀系统.md",
     "笔记/MySQL-事务.md",
     "笔记/系统设计-秒杀系统总结.md",
-    "笔记/Redis-BLock实现.md",
     "笔记/分布式-事务.md",
     "笔记/消息队列.md",
     "附件/image-204.png",
@@ -236,7 +222,6 @@
     "附件/image-198.png",
     "附件/image-197.png",
     "附件/image-196.png",
-    "笔记/[[一些基础知识.md",
     "笔记/未命名 1.base",
     "笔记/未命名 2.base",
     "附件/-1webp",
