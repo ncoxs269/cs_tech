@@ -206,9 +206,9 @@ MySQL 为了让组提交的效果更好，把 redo log 做 fsync 的时间拖到
 	1. redo log 是 InnoDB引擎独有日志，binlog是Server层日志。
 	2. redo log是物理日志，记录数据页的修改；binlog 是逻辑日志，记录sql语句，有三种格式。
 	3. redo log是一个循环追加写日志，容量有限；binlog 是一直可追加写的日志。
-	4. redo log 有 redo log cache，所有线程共用；binlog 有 binlog cache，每个线程单独存在。cache用来在事务提交前暂存日志。
+	4. redo log 有check point，有崩溃恢复能力。binlog 没有。
+	5. redo log 有 redo log cache，所有线程共用；binlog 有 binlog cache，每个线程单独存在。cache用来在事务提交前暂存日志。
 		- mysql 需要双一配置，保证两个日志提交时都写到磁盘而不是文件系统缓存。
-	5. redo log 有check point，有崩溃恢复能力。binlog 没有。
 2. mysql 事务提交时，是先写两个日志，再写内存。在适当的时候（空闲时、redo log满了、内存不足）会把内存“脏页”刷到磁盘里面。
 3. mysql 事务是两阶段提交：先redo log prepare，再提交binlog，最后redo log commit。确保它们一起成功or失败。
 4. redo log 和 binlog 有组提交机制，让相近事务一起写磁盘，减少磁盘IO次数。再加上两个日志都是追加写，减少磁盘随机IO，所以虽然一次事务要写两次日志磁盘，但是性能比直接写数据页磁盘要好。
