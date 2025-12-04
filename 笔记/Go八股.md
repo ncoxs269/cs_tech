@@ -488,6 +488,150 @@ func main() {
 
 `json`包里不能导出私有变量的`tag`是因为`json`包里认为私有变量为不可导出的`Unexported`，所以**跳过获取**名为`json`的`tag`的内容。
 
+## 5.3 怎么实现接口的延迟调用
+注意是**延迟**，不是**延时**。
+在 Golang 中实现接口的延迟调用，核心是将接口方法的调用逻辑封装起来（不立即执行），待后续指定时机（如异步处理、条件满足、批量执行时）再触发执行。
+
+一个方案是闭包，适合已知接口 / 方法的场景，编译期就能做类型检查，无运行时风险，性能也更高。
+```go
+package main
+
+import "fmt"
+
+// 1. 定义示例接口
+type Calculator interface {
+	Add(a, b int) int
+	Multiply(a, b int) int
+}
+
+// 2. 实现接口的结构体
+type BasicCalculator struct{}
+
+func (bc BasicCalculator) Add(a, b int) int {
+	fmt.Println("执行Add方法（闭包版）")
+	return a + b
+}
+
+func (bc BasicCalculator) Multiply(a, b int) int {
+	fmt.Println("执行Multiply方法（闭包版）")
+	return a * b
+}
+
+// 3. 定义延迟调用函数类型（按需封装返回值）
+type DelayCallFunc func() int
+
+func main() {
+	// 初始化接口实例
+	calc := BasicCalculator{}
+
+	// 4. 封装延迟调用逻辑（闭包捕获参数和实例，不立即执行）
+	var delayAdd DelayCallFunc = func() int {
+		return calc.Add(3, 5) // 绑定参数：3和5
+	}
+
+	// 模拟「延迟」：先执行其他业务逻辑
+	fmt.Println("执行前置业务逻辑...")
+
+	// 5. 触发延迟调用（真正执行Add方法）
+	result := delayAdd()
+	fmt.Println("Add调用结果：", result)
+
+	// 同理封装Multiply的延迟调用
+	var delayMultiply DelayCallFunc = func() int {
+		return calc.Multiply(4, 6)
+	}
+	fmt.Println("执行更多前置逻辑...")
+	result2 := delayMultiply()
+	fmt.Println("Multiply调用结果：", result2)
+}
+```
+
+另一种是反射实现，适合通用化的延迟调用组件（如框架、中间件），但有运行时类型检查和性能开销（大概是10-100倍）。
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+// 1. 复用上述Calculator接口和BasicCalculator实现
+
+// 2. 定义延迟调用上下文结构体：保存接口实例、方法名、参数
+type DelayCall struct {
+	instance reflect.Value  // 接口实例的反射值
+	method   string         // 要调用的方法名
+	args     []reflect.Value // 方法参数的反射值切片
+}
+
+// 3. 构造延迟调用实例（入参：接口实例、方法名、方法参数）
+func NewDelayCall(instance interface{}, method string, args ...interface{}) *DelayCall {
+	// 将普通参数转换为reflect.Value切片
+	argValues := make([]reflect.Value, len(args))
+	for i, arg := range args {
+		argValues[i] = reflect.ValueOf(arg)
+	}
+
+	return &DelayCall{
+		instance: reflect.ValueOf(instance),
+		method:   method,
+		args:     argValues,
+	}
+}
+
+// 4. 执行延迟调用（返回方法结果和错误）
+func (dc *DelayCall) Call() (interface{}, error) {
+	// 获取接口方法的反射值
+	method := dc.instance.MethodByName(dc.method)
+	if !method.IsValid() {
+		return nil, fmt.Errorf("方法 %s 不存在或未导出（首字母需大写）", dc.method)
+	}
+
+	// 检查参数数量匹配
+	if method.Type().NumIn() != len(dc.args) {
+		return nil, fmt.Errorf("参数数量不匹配：期望 %d 个，实际 %d 个", method.Type().NumIn(), len(dc.args))
+	}
+
+	// 执行方法调用
+	results := method.Call(dc.args)
+	if len(results) == 0 {
+		return nil, nil // 无返回值
+	}
+
+	// 返回方法的第一个返回值（示例中方法仅一个返回值）
+	return results[0].Interface(), nil
+}
+
+func main() {
+	// 初始化接口实例
+	calc := BasicCalculator{}
+
+	// 构造延迟调用：Add(3,5)
+	delayAdd := NewDelayCall(calc, "Add", 3, 5)
+
+	// 模拟延迟：执行其他逻辑
+	fmt.Println("执行前置业务逻辑（反射版）...")
+
+	// 触发延迟调用
+	result, err := delayAdd.Call()
+	if err != nil {
+		fmt.Println("调用失败：", err)
+		return
+	}
+	fmt.Println("Add调用结果（反射）：", result)
+
+	// 构造Multiply的延迟调用
+	delayMultiply := NewDelayCall(calc, "Multiply", 4, 6)
+	fmt.Println("执行更多前置逻辑（反射版）...")
+	result2, err := delayMultiply.Call()
+	if err != nil {
+		fmt.Println("调用失败：", err)
+		return
+	}
+	fmt.Println("Multiply调用结果（反射）：", result2)
+}
+```
+
 ---
 # 6 引用
 引用传递：https://zhuanlan.zhihu.com/p/542218435
