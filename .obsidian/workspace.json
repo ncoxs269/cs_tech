@@ -4,39 +4,24 @@
     "type": "split",
     "children": [
       {
-        "id": "d854a2ed6ad3231e",
+        "id": "ae4379cc41a972e7",
         "type": "tabs",
         "children": [
           {
-            "id": "56a3f74cafc7e2a6",
+            "id": "bec274c58dabfb1a",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "笔记/Go框架.md",
+                "file": "笔记/Redis-应用.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Go框架"
-            }
-          },
-          {
-            "id": "477e8ff7df51ba28",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "笔记/计算机基础.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "计算机基础"
+              "title": "Redis-应用"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -157,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/计算机基础.md",
+                "file": "笔记/Redis-应用.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "计算机基础 的大纲"
+              "title": "Redis-应用 的大纲"
             }
           }
         ],
@@ -184,35 +169,35 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "477e8ff7df51ba28",
+  "active": "bec274c58dabfb1a",
   "lastOpenFiles": [
-    "笔记/Go框架.md",
+    "笔记/系统设计-秒杀系统.md",
+    "笔记/系统设计-库存管理.md",
+    "笔记/系统设计-分布式缓存.md",
+    "笔记/系统设计-抢红包系统.md",
+    "笔记/系统设计-秒杀系统-极客时间.md",
     "笔记/场景题.md",
+    "笔记/开发基础知识.md",
+    "笔记/分布式-ID.md",
+    "笔记/Go框架.md",
+    "笔记/并发.md",
     "笔记/Go基础语法.md",
-    "笔记/计算机基础.md",
     "笔记/大数据.md",
     "附件/EA269C57FCE480748A8D543CD6F7B7CA.png",
     "笔记/字符编码.md",
     "笔记/设计模式.md",
-    "笔记/并发.md",
     "笔记/Go并发.md",
     "笔记/Go并发模型.md",
     "笔记/Go并发原理与工具.md",
     "笔记/Go代码应用.md",
     "笔记/Go八股.md",
-    "笔记/系统设计-其他.md",
     "笔记/TODO.md",
     "笔记/线上问题排查处理.md",
     "笔记/Go数据结构.md",
     "笔记/Go内存模型和GC.md",
     "笔记/分布式.md",
-    "笔记/分布式-ID.md",
     "笔记/分布式-事务.md",
     "笔记/分布式-共识与算法.md",
-    "笔记/分布式-基础理论.md",
-    "笔记/稳定性.md",
-    "笔记/Redis.md",
-    "笔记/Redis-线程与内存模型.md",
     "笔记/未命名.base",
     "附件/image-48.png",
     "附件/image-204.png",

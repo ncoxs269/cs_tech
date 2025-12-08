@@ -193,7 +193,7 @@ Kitex 完全兼容 Thrift 的 varint 编码逻辑，还做了针对性优化：
 
 ### 3.2.3 原生 Thrift 和 Kitex 的服务模型有什么区别？
 原生 Thrift 用线程池（TThreadPoolServer），适配 Java 但不贴合 Go 协程生态；Kitex 重构为协程池模型，基于 IO 多路复用处理请求，并发能力远高于原生，还集成了熔断、限流等治理能力。
-IO 多路复用参见：[[计算机基础#3 IO 模型]]
+IO 多路复用参见：[[开发基础知识#3 IO 模型]]
 
 Kitex 作为 Go 专属 RPC 框架，把 “非阻塞 IO+epoll 多路复用 + 协程模型” 深度结合，解决原生 Thrift 的性能瓶颈：
 1. **IO 层**：所有 socket 设为非阻塞模式，避免单个连接阻塞协程；
