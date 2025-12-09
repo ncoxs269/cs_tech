@@ -57,9 +57,9 @@ Tags: [[MySQL]]
 
 **除了对回滚段的影响，长事务还占用锁资源**，也可能拖垮整个库，这个我们会在后面讲锁的时候展开。
 
-## 2.4 MVVC实现快照读的隔离性
+## 2.4 MVCC实现快照读的隔离性
 ### 2.4.1 基础概念
-**MVVC (Multi-Version Concurrency Control)** (注：与 MVCC 相对的，是基于锁的并发控制，Lock-Based Concurrency Control)是一种**基于多版本的并发控制协议**，只有在 InnoDB 引擎下存在。
+**MVCC (Multi-Version Concurrency Control)** (注：与 MVCC 相对的，是基于锁的并发控制，Lock-Based Concurrency Control)是一种**基于多版本的并发控制协议**，只有在 InnoDB 引擎下存在。
 MVCC是为了实现事务的隔离性，通过版本号，避免同一数据在不同事务间的竞争，**你可以把它当成基于多版本号的一种乐观锁**。MVCC 最大的好处：**读不加锁，读写不冲突**。
 
 MVCC只在 READ COMMITTED 和 REPEATABLE READ 两个隔离级别下工作。其他两个隔离级别够和MVCC不兼容，因为 READ UNCOMMITTED 总是读取最新的数据行，而不是符合当前事务版本的数据行。而 SERIALIZABLE 则会对所有读取的行都加锁。
@@ -226,10 +226,10 @@ INSERT INTO `user` VALUES (1, '张三'), (3, '王五');
 - 事务有四种隔离级别：读未提交、读已提交、可重复读、串行化
 - 当前读和快照读：
 	- 当前读读取数据的最新值，需要加锁
-	- 快照读基于MVVC，读取数据可见版本的值。只有不加锁的select语句是快照读
-- MVVC实现了事务快照读的隔离性，它可以理解为一种基于多版本号的乐观锁，它的好处是“读不加锁，读写不冲突”。它只在读已提交、可重复读隔离级别生效。
+	- 快照读基于MVCC，读取数据可见版本的值。只有不加锁的select语句是快照读
+- MVCC实现了事务快照读的隔离性，它可以理解为一种基于多版本号的乐观锁，它的好处是“读不加锁，读写不冲突”。它只在读已提交、可重复读隔离级别生效。
 - InnoDB 通过锁（行锁、间隙锁、表锁）实现了事务当前读的隔离性，解决当前读的 “写冲突”。间隙锁只在可重复读生效。
-- MVVC的实现机制：undo log、版本链、Read View
+- MVCC的实现机制：undo log、版本链、Read View
 	- undo log：每条记录更新时会记录一条undo log，记载回滚操作。事务回滚时用 undo log 进行恢复；快照读通过最新数据+应用undo log 来获取自己版本的数据。
 		- undo log何时被清理：当快照读或事务回滚不涉及该undo log时，也就是系统里没有比这个回滚日志更早的 read-view 的时候，对应的undo log才会被 purge 线程统一清除
 	- 版本链：InnoDB每条记录有一个隐藏字段：回滚指针，指向它上个版本的undo log。undo log 也有回滚指针，可以将这些 undo log 连起来串成一个链表。每条 undo log 还会记录和它对应事务的ID
