@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "fb99e01cdce7c2c3",
+        "id": "afc156fd91e848bc",
         "type": "tabs",
         "children": [
           {
-            "id": "8c66c893b41a264d",
+            "id": "5b600361006deaa6",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "笔记/系统设计-库存管理.md",
+                "file": "笔记/线上问题排查处理.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "系统设计-库存管理"
+              "title": "线上问题排查处理"
             }
           }
         ]
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "笔记/系统设计-库存管理.md",
+                "file": "笔记/线上问题排查处理.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "系统设计-库存管理 的大纲"
+              "title": "线上问题排查处理 的大纲"
             }
           }
         ],
@@ -169,34 +169,34 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "8c66c893b41a264d",
+  "active": "5b600361006deaa6",
   "lastOpenFiles": [
-    "笔记/Redis-问题和优化.md",
+    "笔记/并发.md",
+    "笔记/线上问题排查处理.md",
+    "笔记/开发基础知识.md",
     "笔记/系统设计-库存管理.md",
+    "笔记/Redis-问题和优化.md",
+    "笔记/Redis-应用.md",
     "笔记/非关系型数据库.md",
     "笔记/消息队列.md",
     "笔记/大数据.md",
     "笔记/场景题.md",
-    "笔记/开发基础知识.md",
     "笔记/分布式.md",
     "笔记/分布式-ID.md",
     "笔记/分布式-事务.md",
     "笔记/分布式-共识与算法.md",
     "笔记/分布式-基础理论.md",
-    "笔记/线上问题排查处理.md",
     "笔记/稳定性.md",
     "笔记/系统设计-分布式缓存.md",
     "笔记/Go框架.md",
     "笔记/Redis.md",
     "笔记/Redis-线程与内存模型.md",
-    "笔记/Redis-应用.md",
     "笔记/Redis-集群.md",
     "笔记/Redis-数据结构.md",
     "笔记/Redis-持久化与监控.md",
     "笔记/MySQL.md",
     "笔记/MySQL-优化和问题排查.md",
     "笔记/MySQL-分库分表.md",
-    "笔记/MySQL-锁.md",
     "附件/EA269C57FCE480748A8D543CD6F7B7CA.png",
     "笔记/未命名.base",
     "附件/image-48.png",
